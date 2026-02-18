@@ -265,4 +265,1168 @@ textarea.form-input{resize:none;height:65px}
     <div class="logo">⚡ DeliverPro</div>
     <div class="header-right">
       <button class="btn btn-ghost btn-sm" onclick="openScanner()" style="padding:8px 10px">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h2v2h-2zM18 14h3v2h-3zM14 18h3v2h-3zM18 18h3v3h-3z"/></svg>
+      </button>
+      <button class="btn btn-primary btn-sm" onclick="openAddModal()">+ Add</button>
+    </div>
+  </div>
+  <div class="header-stats">
+    <div class="hstat"><div class="hstat-val" id="stat-total">0</div><div class="hstat-label">Total</div></div>
+    <div class="hstat"><div class="hstat-val" style="color:var(--orange)" id="stat-pending">0</div><div class="hstat-label">Pending</div></div>
+    <div class="hstat"><div class="hstat-val" style="color:var(--green)" id="stat-done">0</div><div class="hstat-label">Done</div></div>
+    <div class="hstat"><div class="hstat-val" style="color:var(--purple)" id="stat-locked">0</div><div class="hstat-label">Locked</div></div>
+    <div class="hstat"><div class="hstat-val" style="color:var(--yellow)" id="stat-timed">0</div><div class="hstat-label">⏰</div></div>
+    <div class="hstat"><div class="hstat-val" style="color:var(--teal)" id="stat-photos">0</div><div class="hstat-label">📸</div></div>
+  </div>
+</div>
+
+<!-- GOOGLE LOGIN BAR -->
+<div class="google-login-bar" id="google-login-bar" onclick="handleGoogleLogin()">
+  <div class="g-avatar" id="g-avatar">G</div>
+  <div class="g-info">
+    <div class="g-name" id="g-name">Google se Login karo</div>
+    <div class="g-sub" id="g-sub">Data + Photos Drive mein save honge</div>
+  </div>
+  <div class="g-action" id="g-action">Login →</div>
+</div>
+
+<!-- PROXIMITY ALERT -->
+<div class="proximity-alert" id="proximity-alert">
+  <div style="font-size:28px" id="prox-icon">📍</div>
+  <div style="flex:1">
+    <div style="font-weight:700;font-size:15px" id="prox-title">Aap paas hain!</div>
+    <div style="font-size:12px;opacity:0.8" id="prox-sub"></div>
+  </div>
+  <button class="prox-close" onclick="closeProximity()">✕</button>
+</div>
+
+<!-- FLOATING PARCEL -->
+<div class="floating-parcel" id="floating-parcel">
+  <button class="fp-close" onclick="clearSelectedParcel()">✕</button>
+  <div class="fp-top">
+    <div class="fp-photo" id="fp-photo">
+      <div class="fp-photo-placeholder">📦</div>
+    </div>
+    <div class="fp-info">
+      <div class="fp-name" id="fp-name">—</div>
+      <div class="fp-phone" id="fp-phone"></div>
+      <div class="fp-addr" id="fp-addr"></div>
+    </div>
+  </div>
+  <div class="fp-time-note" id="fp-time-note" style="display:none">
+    <span style="font-size:18px">⏰</span>
+    <span style="font-size:13px;font-weight:600" id="fp-time-text"></span>
+  </div>
+  <div class="fp-actions">
+    <button class="fp-nav-btn" onclick="navigateSelected()">🗺️ Navigate NOW</button>
+    <button class="fp-call-btn" onclick="callSelected()">📞 Call</button>
+  </div>
+</div>
+
+<!-- PHOTO VIEWER -->
+<div class="photo-viewer" id="photo-viewer">
+  <button class="photo-viewer-close" onclick="closePhotoViewer()">✕ Close</button>
+  <img id="photo-viewer-img" src="" alt="">
+  <div class="photo-viewer-name" id="photo-viewer-name"></div>
+</div>
+
+<!-- SCREENS -->
+<!-- HOME -->
+<div class="screen active" id="screen-home">
+  <div class="section-title">Today's Route</div>
+  <div class="card" style="padding:12px">
+    <div id="map"></div>
+    <div style="margin-top:10px">
+      <div class="route-progress-bar"><div class="route-progress-fill" id="route-progress" style="width:0%"></div></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">
+        <span style="font-size:13px;color:var(--text2)" id="route-text">0 stops planned</span>
+        <button class="btn btn-green btn-sm" onclick="startRoute()">▶ Start Route</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="next-delivery-card" style="display:none">
+    <div class="section-title">Current Delivery</div>
+    <div class="card" style="border-color:var(--orange);box-shadow:0 0 20px rgba(245,158,11,0.15);padding:14px">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+        <div id="nd-photo" style="width:50px;height:50px;border-radius:12px;overflow:hidden;background:var(--surface2);flex-shrink:0;border:1px solid var(--border)">
+          <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:24px">📦</div>
+        </div>
+        <div style="flex:1;min-width:0">
+          <div id="nd-name" style="font-weight:700;font-size:16px"></div>
+          <div id="nd-phone" style="font-size:12px;color:var(--text2)"></div>
+          <div id="nd-addr" style="font-size:12px;color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></div>
+        </div>
+      </div>
+      <div id="nd-time-note" style="display:none;border-radius:9px;padding:8px 12px;margin-bottom:10px;display:none">
+        <span style="font-size:13px">⏰</span>
+        <span id="nd-time-text" style="font-size:13px;font-weight:700;color:var(--yellow);margin-left:6px"></span>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-primary" style="flex:2;padding:11px" onclick="navigateCurrent()">🗺️ Navigate</button>
+        <button class="btn btn-green" style="flex:2;padding:11px" onclick="markCurrentDelivered()">✓ Delivered</button>
+        <button class="btn btn-ghost btn-sm" onclick="callCurrent()" style="padding:11px 13px;flex:1">📞</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title" style="margin-top:4px">Pending Parcels</div>
+  <div id="pending-preview"></div>
+</div>
+
+<!-- PARCELS -->
+<div class="screen" id="screen-parcels">
+  <div class="search-bar">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;color:var(--text3);flex-shrink:0"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    <input type="text" placeholder="Search name, phone, barcode..." id="search-input" oninput="renderParcels()">
+  </div>
+  <div style="display:flex;gap:8px;margin-bottom:12px;overflow-x:auto;padding-bottom:2px">
+    <button class="btn btn-primary btn-sm filter-btn" onclick="setFilter(this,'all')" style="white-space:nowrap">All</button>
+    <button class="btn btn-ghost btn-sm filter-btn" onclick="setFilter(this,'pending')" style="white-space:nowrap">Pending</button>
+    <button class="btn btn-ghost btn-sm filter-btn" onclick="setFilter(this,'timed')" style="white-space:nowrap">⏰ Timed</button>
+    <button class="btn btn-ghost btn-sm filter-btn" onclick="setFilter(this,'photos')" style="white-space:nowrap">📸 Photos</button>
+    <button class="btn btn-ghost btn-sm filter-btn" onclick="setFilter(this,'locked')" style="white-space:nowrap">🔒 Locked</button>
+    <button class="btn btn-ghost btn-sm filter-btn" onclick="setFilter(this,'done')" style="white-space:nowrap">Done</button>
+  </div>
+  <div id="parcels-list"></div>
+</div>
+
+<!-- SCAN -->
+<div class="screen" id="screen-scan">
+  <div class="section-title">Barcode / QR Scanner</div>
+  <div class="card">
+    <div class="scanner-container">
+      <video id="scanner-video" playsinline muted autoplay></video>
+      <div class="scanner-overlay"><div class="scanner-frame"><div class="scanner-line"></div></div></div>
+    </div>
+    <p style="text-align:center;color:var(--text2);font-size:13px;margin-top:12px">Parcel ka barcode ya QR scan karo</p>
+    <div id="scan-result" style="display:none;margin-top:12px">
+      <div style="background:var(--surface2);border-radius:10px;padding:12px;border:1px solid var(--border)">
+        <div style="font-size:11px;color:var(--text2);margin-bottom:4px">Scanned:</div>
+        <div id="scan-code" style="font-weight:700;font-size:16px;letter-spacing:1px"></div>
+      </div>
+      <div id="scan-matched" style="margin-top:10px"></div>
+      <button class="btn btn-primary" style="margin-top:10px" onclick="addScannedAsNew()">+ Add as New Parcel</button>
+    </div>
+  </div>
+  <div class="section-title" style="margin-top:16px">Manual Entry</div>
+  <div class="card">
+    <div style="display:flex;gap:8px">
+      <input type="text" class="form-input" id="manual-code" placeholder="Enter barcode manually..." style="flex:1">
+      <button class="btn btn-primary btn-sm" onclick="manualSearch()" style="flex-shrink:0">Search</button>
+    </div>
+  </div>
+</div>
+
+<!-- BACKUP -->
+<div class="screen" id="screen-io">
+  <div class="section-title">Google Drive Sync</div>
+  <div class="card">
+    <div id="drive-status-card">
+      <p style="font-size:13px;color:var(--text2);margin-bottom:14px">Google se login karo — sab data + photos automatically Drive mein save honge!</p>
+      <button class="btn btn-google" onclick="handleGoogleLogin()" id="drive-login-btn">
+        <img src="https://www.google.com/favicon.ico" style="width:18px;height:18px"> Login with Google
+      </button>
+    </div>
+    <div id="drive-logged-bar" style="display:none">
+      <div class="drive-bar">
+        <div style="font-size:20px">☁️</div>
+        <div style="flex:1">
+          <div style="font-weight:600;font-size:14px" id="drive-user-name">Connected</div>
+          <div style="font-size:12px;color:var(--text2)" id="drive-sync-status">Ready to sync</div>
+        </div>
+        <button class="btn btn-green btn-sm" onclick="syncToDrive()">↑ Sync Now</button>
+      </div>
+      <button class="btn btn-primary" style="margin-bottom:10px" onclick="syncToDrive()">☁️ Save to Google Drive</button>
+      <button class="btn btn-ghost" onclick="loadFromDrive()">⬇️ Load from Drive</button>
+    </div>
+  </div>
+
+  <div class="section-title" style="margin-top:8px">Local Backup</div>
+  <div class="card">
+    <button class="io-btn" onclick="exportData('json')"><div class="io-icon" style="background:rgba(59,130,246,0.15)">💾</div><div><div style="font-weight:600">Export Full Backup (JSON)</div><div style="font-size:12px;color:var(--text2)">Parcels + locations + time notes</div></div></button>
+    <button class="io-btn" onclick="exportData('csv')"><div class="io-icon" style="background:rgba(16,185,129,0.15)">📊</div><div><div style="font-weight:600">Export CSV (Excel)</div><div style="font-size:12px;color:var(--text2)">Excel mein kholne ke liye</div></div></button>
+    <button class="io-btn" onclick="importData()"><div class="io-icon" style="background:rgba(245,158,11,0.15)">📂</div><div><div style="font-weight:600">Import Backup</div><div style="font-size:12px;color:var(--text2)">JSON se restore karein</div></div></button>
+    <input type="file" id="import-file" accept=".json" style="display:none" onchange="handleImport(event)">
+  </div>
+
+  <div class="section-title" style="margin-top:8px">Share App</div>
+  <div class="card">
+    <div style="background:var(--surface2);border-radius:10px;padding:12px;margin-bottom:12px;border:1px solid var(--border)">
+      <div style="font-size:11px;color:var(--text2);margin-bottom:4px">App URL:</div>
+      <div id="app-url" style="font-size:13px;color:var(--accent);word-break:break-all"></div>
+    </div>
+    <button class="btn btn-primary" onclick="shareApp()">📤 Share</button>
+  </div>
+
+  <div class="section-title" style="margin-top:8px">Info</div>
+  <div class="card"><div id="storage-info"></div></div>
+  <div class="section-title" style="margin-top:8px">Danger Zone</div>
+  <div class="card"><button class="btn btn-red" onclick="clearAllData()">🗑️ Clear All Data</button></div>
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav">
+  <button class="nav-btn active" onclick="switchScreen('home',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>Home
+  </button>
+  <button class="nav-btn" onclick="switchScreen('parcels',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="18" rx="2"/><path d="M8 10h8M8 14h5"/></svg>Parcels
+  </button>
+  <button class="nav-btn" onclick="switchScreen('scan',this);startScanner()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h2v2h-2zM18 14h3v2h-3zM14 18h3v2h-3zM18 18h3v3h-3z"/></svg>Scan
+  </button>
+  <button class="nav-btn" onclick="switchScreen('io',this);updateIOScreen()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Backup
+  </button>
+</nav>
+
+<!-- ADD/EDIT MODAL -->
+<div class="modal-overlay" id="add-modal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="modal-title">Add New Parcel</div>
+    <input type="hidden" id="edit-id">
+
+    <div class="form-group">
+      <label class="form-label">Customer Name *</label>
+      <input type="text" class="form-input" id="f-name" placeholder="e.g. Rahul Kumar">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Phone Number</label>
+      <input type="tel" class="form-input" id="f-phone" placeholder="e.g. 9876543210">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Barcode / Tracking ID</label>
+      <div style="display:flex;gap:8px">
+        <input type="text" class="form-input" id="f-barcode" placeholder="Scan ya enter karein" style="flex:1">
+        <button class="btn btn-ghost btn-sm" onclick="scanForForm()" style="flex-shrink:0;padding:12px">📷</button>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Address</label>
+      <textarea class="form-input" id="f-address" placeholder="Full delivery address..."></textarea>
+    </div>
+
+    <!-- TIME NOTE -->
+    <div class="time-section">
+      <div style="font-size:13px;font-weight:700;color:var(--yellow);margin-bottom:10px">⏰ Delivery Time Note</div>
+      <div class="time-presets">
+        <button class="time-preset" onclick="setTimePreset('Subah 9 baje ke baad dena')">9 AM+</button>
+        <button class="time-preset" onclick="setTimePreset('Sirf 12 baje dena')">12 Baje sirf</button>
+        <button class="time-preset" onclick="setTimePreset('Dopahar 2-4 baje')">2-4 PM</button>
+        <button class="time-preset" onclick="setTimePreset('Shaam 5 baje ke baad')">5 PM+</button>
+        <button class="time-preset" onclick="setTimePreset('Raat 7-9 baje')">7-9 PM</button>
+        <button class="time-preset" onclick="setTimePreset('Pehle call karna zaroori')">Call First!</button>
+      </div>
+      <input type="text" class="form-input" id="f-timenote" placeholder="Custom: 'Sirf Sunday available hai'...">
+    </div>
+
+    <!-- PHOTOS SECTION -->
+    <div style="margin-bottom:14px">
+      <label class="form-label">📸 Ghar Ki Photo (Pehchaan ke liye)</label>
+      <div class="photo-grid" id="form-photo-grid">
+        <div class="add-photo-btn" onclick="addPhotoToForm()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          Photo Lo
+        </div>
+      </div>
+      <input type="file" id="photo-input" accept="image/*" capture="environment" style="display:none" onchange="handlePhotoCapture(event)">
+      <p style="font-size:11px;color:var(--text3);margin-top:6px">📱 Ghar ka darwaza, naam plate, koi pehchaan photo lo</p>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Notes</label>
+      <input type="text" class="form-input" id="f-notes" placeholder="Koi aur instructions...">
+    </div>
+
+    <!-- LOCATION -->
+    <div style="border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:14px">
+      <div style="padding:12px 14px;background:var(--surface2);display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div style="font-weight:600;font-size:14px">📍 Location</div>
+          <div id="loc-display" style="font-size:12px;color:var(--text2);margin-top:2px">Not set</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="openLocationPicker()">Pick on Map</button>
+      </div>
+      <div id="mini-map-wrap" style="display:none;height:140px"><div id="mini-map" style="height:100%"></div></div>
+    </div>
+
+    <!-- LOCK TOGGLE -->
+    <div class="card" style="margin-bottom:14px;padding:12px 14px">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div style="font-weight:600;font-size:14px">🔒 Lock Location</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:2px">Permanently save (change ho sakta hai)</div>
+        </div>
+        <button class="toggle" id="lock-toggle" onclick="this.classList.toggle('on')"></button>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-ghost" onclick="closeModal('add-modal')" style="flex:1">Cancel</button>
+      <button class="btn btn-primary" onclick="saveParcel()" style="flex:2">💾 Save Parcel</button>
+    </div>
+  </div>
+</div>
+
+<!-- LOCATION PICKER -->
+<div class="location-modal" id="location-modal">
+  <div class="location-modal-header">
+    <button class="btn btn-ghost btn-sm" onclick="closeLocationPicker()">✕</button>
+    <div style="flex:1;font-family:'Syne',sans-serif;font-weight:700;font-size:16px;text-align:center">📍 Exact Location</div>
+    <button class="btn btn-primary btn-sm" onclick="confirmLocation()">✓ Confirm</button>
+  </div>
+  <div class="location-modal-map">
+    <div id="location-picker-map"></div>
+    <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-100%);font-size:38px;pointer-events:none;z-index:1000;filter:drop-shadow(0 3px 8px rgba(0,0,0,0.7))">📍</div>
+    <button onclick="goToMyLocation()" style="position:absolute;bottom:16px;right:14px;z-index:1000;background:linear-gradient(135deg,#3B82F6,#6366F1);border:none;color:#fff;border-radius:12px;padding:12px 16px;cursor:pointer;box-shadow:0 4px 16px rgba(59,130,246,0.4);font-family:'DM Sans',sans-serif;font-weight:700;font-size:13px">📡 Meri Exact Location</button>
+  </div>
+  <div class="location-modal-bottom">
+    <div class="gps-box" id="gps-box">
+      <div class="gps-dot"></div>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:600" id="gps-title">GPS dhundh raha hai...</div>
+        <div style="font-size:11px;color:var(--text2)" id="gps-sub"></div>
+      </div>
+    </div>
+    <div style="font-size:11px;color:var(--text2);margin-bottom:4px">Selected Location:</div>
+    <div id="picker-address" style="font-size:14px;font-weight:500">Map drag karo ya GPS tap karo</div>
+    <div id="picker-coords" style="font-size:11px;color:var(--text3);margin-top:3px;font-family:monospace"></div>
+    <div style="font-size:11px;color:var(--text3);margin-top:6px">💡 Ghar ke DARWAZE pe pin lagao — road pe nahi!</div>
+  </div>
+</div>
+
+<!-- FORM SCANNER -->
+<div class="modal-overlay" id="form-scanner-modal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Scan Barcode</div>
+    <div class="scanner-container" style="max-width:100%">
+      <video id="form-scanner-video" playsinline muted autoplay></video>
+      <div class="scanner-overlay"><div class="scanner-frame"><div class="scanner-line"></div></div></div>
+    </div>
+    <button class="btn btn-ghost" style="margin-top:12px" onclick="closeFormScanner()">Cancel</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================================================
+// CONFIG — AAPKA CLIENT ID
+// ============================================================
+const GOOGLE_CLIENT_ID = '143572661160-ktqhvriac1ug0jd7c5si76kdjq5vqkg8.apps.googleusercontent.com';
+const SCOPES = 'https://www.googleapis.com/auth/drive.file';
+const DRIVE_FILE_NAME = 'deliverpro_data.json';
+
+// ============================================================
+// STATE
+// ============================================================
+let parcels = [];
+let currentFilter = 'all';
+let currentDeliveryIdx = 0;
+let routeStarted = false;
+let selectedLat = null, selectedLng = null;
+let pickerMap = null, homeMap = null, miniMap = null, miniMarker = null;
+let scannerStream = null, scannerAnimFrame = null;
+let formScannerStream = null, formScannerAnimFrame = null;
+let scanActive = false;
+let selectedParcelId = null;
+let proximityWatchId = null;
+let formPhotos = []; // base64 photos for current form
+let googleToken = null;
+let googleUser = null;
+let driveFileId = null;
+
+// ============================================================
+// DATA
+// ============================================================
+function loadData() {
+  try {
+    parcels = JSON.parse(localStorage.getItem('dp_v4') || '[]');
+    googleToken = localStorage.getItem('dp_gtoken') || null;
+    driveFileId = localStorage.getItem('dp_driveid') || null;
+    const gu = localStorage.getItem('dp_guser');
+    if(gu) googleUser = JSON.parse(gu);
+  } catch { parcels = []; }
+}
+
+function saveData() {
+  localStorage.setItem('dp_v4', JSON.stringify(parcels));
+  updateStats();
+}
+
+function genId() { return Date.now().toString(36) + Math.random().toString(36).substr(2,5); }
+
+function updateStats() {
+  document.getElementById('stat-total').textContent = parcels.length;
+  document.getElementById('stat-pending').textContent = parcels.filter(p=>!p.delivered).length;
+  document.getElementById('stat-done').textContent = parcels.filter(p=>p.delivered).length;
+  document.getElementById('stat-locked').textContent = parcels.filter(p=>p.locationLocked).length;
+  document.getElementById('stat-timed').textContent = parcels.filter(p=>p.timeNote&&!p.delivered).length;
+  document.getElementById('stat-photos').textContent = parcels.filter(p=>p.photos&&p.photos.length>0).length;
+}
+
+// ============================================================
+// GOOGLE LOGIN + DRIVE
+// ============================================================
+function initGoogleLogin() {
+  if(googleUser) updateLoginUI(true);
+}
+
+function handleGoogleLogin() {
+  if(googleToken) {
+    // Already logged in — offer logout
+    if(confirm(`${googleUser?.name} se logout karein?`)) {
+      googleToken = null; googleUser = null; driveFileId = null;
+      localStorage.removeItem('dp_gtoken');
+      localStorage.removeItem('dp_guser');
+      localStorage.removeItem('dp_driveid');
+      updateLoginUI(false);
+      showToast('Logged out','error');
+    }
+    return;
+  }
+
+  try {
+    const client = google.accounts.oauth2.initTokenClient({
+      client_id: GOOGLE_CLIENT_ID,
+      scope: SCOPES + ' https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email',
+      callback: async (resp) => {
+        if(resp.error) { showToast('Login failed: '+resp.error,'error'); return; }
+        googleToken = resp.access_token;
+        localStorage.setItem('dp_gtoken', googleToken);
+        await fetchGoogleUser();
+        updateLoginUI(true);
+        showToast('✅ Google se login ho gaye!','success');
+        // Auto sync after login
+        setTimeout(()=>syncToDrive(),1000);
+      }
+    });
+    client.requestAccessToken();
+  } catch(e) {
+    showToast('Google login error. API load ho rahi hai...','error');
+    console.error(e);
+  }
+}
+
+async function fetchGoogleUser() {
+  try {
+    const r = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+      headers: { Authorization: 'Bearer '+googleToken }
+    });
+    googleUser = await r.json();
+    localStorage.setItem('dp_guser', JSON.stringify(googleUser));
+  } catch {}
+}
+
+function updateLoginUI(loggedIn) {
+  const bar = document.getElementById('google-login-bar');
+  const avatar = document.getElementById('g-avatar');
+  const name = document.getElementById('g-name');
+  const sub = document.getElementById('g-sub');
+  const action = document.getElementById('g-action');
+
+  if(loggedIn && googleUser) {
+    bar.className = 'google-login-bar logged-in';
+    if(googleUser.picture) avatar.innerHTML = `<img src="${googleUser.picture}">`;
+    else avatar.textContent = (googleUser.name||'U')[0];
+    name.textContent = googleUser.name || 'Connected';
+    sub.textContent = googleUser.email || 'Drive sync active';
+    action.textContent = '✅ Connected';
+    action.className = 'g-action synced';
+
+    // Update backup screen
+    document.getElementById('drive-status-card').style.display='none';
+    document.getElementById('drive-logged-bar').style.display='block';
+    document.getElementById('drive-user-name').textContent = googleUser.name||'';
+  } else {
+    bar.className = 'google-login-bar';
+    avatar.textContent = 'G';
+    name.textContent = 'Google se Login karo';
+    sub.textContent = 'Data + Photos Drive mein save honge';
+    action.textContent = 'Login →';
+    action.className = 'g-action';
+    document.getElementById('drive-status-card').style.display='block';
+    document.getElementById('drive-logged-bar').style.display='none';
+  }
+}
+
+async function syncToDrive() {
+  if(!googleToken) { showToast('Pehle Google se login karo','error'); return; }
+
+  const action = document.getElementById('g-action');
+  action.textContent = '↑ Syncing...';
+  action.className = 'g-action syncing';
+  document.getElementById('drive-sync-status').textContent = 'Saving to Drive...';
+
+  try {
+    // Prepare data — photos as base64 inside JSON
+    const backup = {
+      version: 4,
+      savedAt: new Date().toISOString(),
+      device: navigator.userAgent.slice(0,50),
+      parcels: parcels
+    };
+    const content = JSON.stringify(backup, null, 2);
+
+    if(driveFileId) {
+      // Update existing file
+      await fetch(`https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=media`, {
+        method: 'PATCH',
+        headers: { Authorization: 'Bearer '+googleToken, 'Content-Type': 'application/json' },
+        body: content
+      });
+    } else {
+      // Create new file
+      const meta = await fetch('https://www.googleapis.com/drive/v3/files', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer '+googleToken, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: DRIVE_FILE_NAME, mimeType: 'application/json' })
+      });
+      const metaJson = await meta.json();
+      driveFileId = metaJson.id;
+      localStorage.setItem('dp_driveid', driveFileId);
+
+      await fetch(`https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=media`, {
+        method: 'PATCH',
+        headers: { Authorization: 'Bearer '+googleToken, 'Content-Type': 'application/json' },
+        body: content
+      });
+    }
+
+    const now = new Date().toLocaleTimeString('hi-IN');
+    action.textContent = '✅ Synced';
+    action.className = 'g-action synced';
+    document.getElementById('drive-sync-status').textContent = `Last sync: ${now}`;
+    showToast('☁️ Drive mein save ho gaya!','success');
+
+  } catch(e) {
+    action.textContent = '⚠️ Sync failed';
+    action.className = 'g-action';
+    document.getElementById('drive-sync-status').textContent = 'Sync failed — retry karein';
+    showToast('Drive sync failed','error');
+    console.error(e);
+  }
+}
+
+async function loadFromDrive() {
+  if(!googleToken) { showToast('Pehle login karo','error'); return; }
+  showToast('Drive se load ho raha hai...','');
+
+  try {
+    // Find file
+    const search = await fetch(
+      `https://www.googleapis.com/drive/v3/files?q=name='${DRIVE_FILE_NAME}'&spaces=drive&fields=files(id,name,modifiedTime)`,
+      { headers: { Authorization: 'Bearer '+googleToken } }
+    );
+    const searchJson = await search.json();
+    if(!searchJson.files || searchJson.files.length === 0) {
+      showToast('Drive mein koi backup nahi mila','error'); return;
+    }
+
+    const fileId = searchJson.files[0].id;
+    driveFileId = fileId;
+    localStorage.setItem('dp_driveid', fileId);
+
+    const file = await fetch(
+      `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
+      { headers: { Authorization: 'Bearer '+googleToken } }
+    );
+    const data = await file.json();
+    const imported = data.parcels || data;
+
+    if(!Array.isArray(imported)) { showToast('Invalid backup file','error'); return; }
+
+    const existing = new Set(parcels.map(p=>p.id));
+    let added = 0;
+    imported.forEach(p => { if(!existing.has(p.id)) { parcels.push(p); added++; } });
+
+    saveData(); renderHome(); renderParcels(); updateIOScreen();
+    showToast(`✅ ${added} parcels Drive se load hue!`,'success');
+
+  } catch(e) {
+    showToast('Drive se load failed','error');
+    console.error(e);
+  }
+}
+
+// ============================================================
+// PHOTO MANAGEMENT
+// ============================================================
+function addPhotoToForm() {
+  document.getElementById('photo-input').click();
+}
+
+function handlePhotoCapture(e) {
+  const file = e.target.files[0];
+  if(!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    // Compress image
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const maxSize = 800;
+      let w = img.width, h = img.height;
+      if(w > maxSize || h > maxSize) {
+        if(w > h) { h = Math.round(h*maxSize/w); w = maxSize; }
+        else { w = Math.round(w*maxSize/h); h = maxSize; }
+      }
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      const compressed = canvas.toDataURL('image/jpeg', 0.7);
+      formPhotos.push({ id: genId(), data: compressed, takenAt: new Date().toISOString() });
+      renderFormPhotos();
+      showToast('📸 Photo added!','success');
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+  e.target.value = '';
+}
+
+function renderFormPhotos() {
+  const grid = document.getElementById('form-photo-grid');
+  grid.innerHTML = '';
+
+  formPhotos.forEach((photo, i) => {
+    const div = document.createElement('div');
+    div.className = 'photo-thumb';
+    div.innerHTML = `
+      <img src="${photo.data}" onclick="viewPhoto('${photo.data}','Photo ${i+1}')">
+      <button class="photo-del" onclick="removeFormPhoto(${i});event.stopPropagation()">✕</button>
+    `;
+    grid.appendChild(div);
+  });
+
+  // Add button
+  const addBtn = document.createElement('div');
+  addBtn.className = 'add-photo-btn';
+  addBtn.onclick = addPhotoToForm;
+  addBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>Photo Lo`;
+  grid.appendChild(addBtn);
+}
+
+function removeFormPhoto(i) {
+  formPhotos.splice(i, 1);
+  renderFormPhotos();
+}
+
+function viewPhoto(src, name) {
+  document.getElementById('photo-viewer-img').src = src;
+  document.getElementById('photo-viewer-name').textContent = name;
+  document.getElementById('photo-viewer').classList.add('show');
+}
+
+function closePhotoViewer() {
+  document.getElementById('photo-viewer').classList.remove('show');
+}
+
+function addPhotoToParcel(parcelId) {
+  // Open camera for existing parcel
+  const input = document.createElement('input');
+  input.type = 'file'; input.accept = 'image/*'; input.capture = 'environment';
+  input.onchange = (e) => {
+    const file = e.target.files[0]; if(!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const maxSize = 800;
+        let w = img.width, h = img.height;
+        if(w > maxSize || h > maxSize) {
+          if(w > h) { h = Math.round(h*maxSize/w); w = maxSize; }
+          else { w = Math.round(w*maxSize/h); h = maxSize; }
+        }
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        const compressed = canvas.toDataURL('image/jpeg', 0.7);
+        const idx = parcels.findIndex(p=>p.id===parcelId);
+        if(idx !== -1) {
+          if(!parcels[idx].photos) parcels[idx].photos = [];
+          parcels[idx].photos.push({ id: genId(), data: compressed, takenAt: new Date().toISOString() });
+          saveData(); renderParcels();
+          if(googleToken) setTimeout(()=>syncToDrive(), 2000);
+          showToast('📸 Photo saved!','success');
+        }
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  };
+  input.click();
+}
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function switchScreen(name, btn) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('screen-'+name).classList.add('active');
+  btn.classList.add('active');
+  if(name==='home') renderHome();
+  if(name==='parcels') renderParcels();
+  if(name!=='scan') stopScanner();
+}
+
+// ============================================================
+// TIME NOTE
+// ============================================================
+function setTimePreset(text) {
+  document.getElementById('f-timenote').value = text;
+  document.querySelectorAll('.time-preset').forEach(b => b.classList.remove('selected'));
+}
+
+function isUrgentTime(timeNote) {
+  if(!timeNote) return false;
+  const h = new Date().getHours();
+  const n = timeNote.toLowerCase();
+  if(n.includes('9') && h>=8 && h<=10) return true;
+  if(n.includes('12') && h>=11 && h<=13) return true;
+  if((n.includes('2')||n.includes('3')||n.includes('4')) && h>=13 && h<=16) return true;
+  if(n.includes('5') && h>=16 && h<=18) return true;
+  if((n.includes('7')||n.includes('8')||n.includes('9')) && h>=18 && h<=21) return true;
+  return false;
+}
+
+// ============================================================
+// FLOATING PARCEL
+// ============================================================
+function selectParcel(id) {
+  const p = parcels.find(x=>x.id===id);
+  if(!p) return;
+  selectedParcelId = id;
+
+  // Show photo in floating button
+  const fpPhoto = document.getElementById('fp-photo');
+  if(p.photos && p.photos.length > 0) {
+    fpPhoto.innerHTML = `<img src="${p.photos[0].data}" onclick="viewPhoto('${p.photos[0].data}','${p.name}')">`;
+  } else {
+    fpPhoto.innerHTML = '<div class="fp-photo-placeholder">📦</div>';
+  }
+
+  document.getElementById('fp-name').textContent = p.name;
+  document.getElementById('fp-phone').textContent = p.phone || '';
+  document.getElementById('fp-addr').textContent = p.address || (p.lat ? `${p.lat.toFixed(5)}, ${p.lng.toFixed(5)}` : 'No location');
+
+  const ftNote = document.getElementById('fp-time-note');
+  if(p.timeNote) {
+    ftNote.style.display = 'flex';
+    ftNote.className = 'fp-time-note'+(isUrgentTime(p.timeNote)?' urgent':'');
+    document.getElementById('fp-time-text').textContent = p.timeNote;
+  } else {
+    ftNote.style.display = 'none';
+  }
+
+  document.getElementById('floating-parcel').classList.add('visible');
+  document.querySelectorAll('.parcel-card').forEach(c=>c.classList.remove('selected-card'));
+  const card = document.getElementById('pc-'+id);
+  if(card) { card.classList.add('selected-card'); card.scrollIntoView({behavior:'smooth',block:'nearest'}); }
+
+  if(p.lat && p.lng) startProximityWatch(p);
+}
+
+function clearSelectedParcel() {
+  selectedParcelId = null;
+  document.getElementById('floating-parcel').classList.remove('visible');
+  document.querySelectorAll('.parcel-card').forEach(c=>c.classList.remove('selected-card'));
+  stopProximityWatch();
+}
+
+function navigateSelected() {
+  const p = parcels.find(x=>x.id===selectedParcelId);
+  if(p) instantNavigate(p);
+}
+function callSelected() {
+  const p = parcels.find(x=>x.id===selectedParcelId);
+  if(p?.phone) window.open('tel:'+p.phone);
+}
+
+function instantNavigate(p) {
+  if(!p) return;
+  if(p.lat && p.lng) {
+    window.location.href = `google.navigation:q=${p.lat},${p.lng}&mode=d`;
+    setTimeout(()=>window.open(`https://maps.google.com/?daddr=${p.lat},${p.lng}&directionsmode=driving`,'_blank'),1200);
+  } else if(p.address) {
+    window.open(`https://maps.google.com/?daddr=${encodeURIComponent(p.address)}&directionsmode=driving`,'_blank');
+  } else {
+    showToast('⚠️ Location set nahi hai!','error');
+  }
+}
+
+// ============================================================
+// PROXIMITY WATCH
+// ============================================================
+function startProximityWatch(tp) {
+  stopProximityWatch();
+  if(!navigator.geolocation || !tp.lat) return;
+  proximityWatchId = navigator.geolocation.watchPosition(pos => {
+    const m = distMeters(pos.coords.latitude, pos.coords.longitude, tp.lat, tp.lng);
+    const alert = document.getElementById('proximity-alert');
+    if(m <= 50) {
+      alert.className='proximity-alert show very-near';
+      document.getElementById('prox-icon').textContent='🏠';
+      document.getElementById('prox-title').textContent=`Bas ${Math.round(m)}m! Ghar yahi hai!`;
+      document.getElementById('prox-sub').textContent=`${tp.name} — Darwaza dhundho!`;
+      if(navigator.vibrate) navigator.vibrate([200,100,200,100,400]);
+    } else if(m <= 150) {
+      alert.className='proximity-alert show near';
+      document.getElementById('prox-icon').textContent='📍';
+      document.getElementById('prox-title').textContent=`${Math.round(m)}m door — Paas ho!`;
+      document.getElementById('prox-sub').textContent=`${tp.name} — Navigation band karo, ghar dhundho`;
+    } else {
+      alert.className='proximity-alert';
+    }
+  }, null, {enableHighAccuracy:true,maximumAge:0,timeout:10000});
+}
+
+function stopProximityWatch() {
+  if(proximityWatchId!==null){navigator.geolocation.clearWatch(proximityWatchId);proximityWatchId=null;}
+  document.getElementById('proximity-alert').className='proximity-alert';
+}
+function closeProximity(){document.getElementById('proximity-alert').className='proximity-alert';}
+
+function distMeters(a,b,c,d){const R=6371000,dL=(c-a)*Math.PI/180,dG=(d-b)*Math.PI/180,x=Math.sin(dL/2)**2+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(dG/2)**2;return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));}
+
+// ============================================================
+// HOME MAP
+// ============================================================
+function initHomeMap(){
+  if(homeMap)return;
+  homeMap=L.map('map',{zoomControl:true,attributionControl:false});
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(homeMap);
+  homeMap.setView([28.6139,77.2090],11);
+}
+
+function renderHome(){initHomeMap();renderRouteOnMap();renderPendingPreview();updateNextDeliveryCard();}
+
+function renderRouteOnMap(){
+  if(!homeMap)return;
+  homeMap.eachLayer(l=>{if(l instanceof L.Marker||l instanceof L.Polyline)homeMap.removeLayer(l);});
+  const pending=getPendingOrdered().filter(p=>p.lat&&p.lng);
+  const total=parcels.filter(p=>p.lat&&p.lng).length;
+  const done=parcels.filter(p=>p.delivered&&p.lat&&p.lng).length;
+  document.getElementById('route-progress').style.width=(total>0?(done/total*100):0)+'%';
+  document.getElementById('route-text').textContent=pending.length+' stops remaining';
+  const points=[];
+  pending.forEach((p,i)=>{
+    const isNext=routeStarted&&i===0;
+    const urgent=p.timeNote&&isUrgentTime(p.timeNote);
+    const color=urgent?'#EF4444':isNext?'#F59E0B':p.timeNote?'#FBBF24':'#3B82F6';
+    const hasPhoto=p.photos&&p.photos.length>0;
+    const icon=L.divIcon({
+      html:`<div onclick="selectParcel('${p.id}')" style="background:${color};color:#fff;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;border:2px solid #fff;box-shadow:0 2px 10px rgba(0,0,0,0.5);cursor:pointer;">${hasPhoto?'📸':urgent?'⏰':(i+1)}</div>`,
+      className:'',iconSize:[32,32],iconAnchor:[16,16]
+    });
+    const marker=L.marker([p.lat,p.lng],{icon}).addTo(homeMap);
+    marker.on('click',()=>selectParcel(p.id));
+    points.push([p.lat,p.lng]);
+  });
+  if(points.length>1)L.polyline(points,{color:'#3B82F6',weight:3,dashArray:'6,6',opacity:0.7}).addTo(homeMap);
+  if(points.length>0)homeMap.fitBounds(L.latLngBounds(points),{padding:[30,30]});
+}
+
+function renderPendingPreview(){
+  const pending=getPendingOrdered();
+  const el=document.getElementById('pending-preview');
+  if(pending.length===0){el.innerHTML='<div class="empty-state"><div style="font-size:48px">🎉</div><div>Sab parcels delivered!</div></div>';return;}
+  el.innerHTML=pending.slice(0,5).map((p,i)=>parcelCardHTML(p,i+1,i===currentDeliveryIdx&&routeStarted,false)).join('');
+}
+
+function updateNextDeliveryCard(){
+  const pending=getPendingOrdered();
+  const card=document.getElementById('next-delivery-card');
+  if(!routeStarted||pending.length===0){card.style.display='none';return;}
+  const p=pending[currentDeliveryIdx]||pending[0];
+  if(!p){card.style.display='none';return;}
+  card.style.display='block';
+  document.getElementById('nd-name').textContent=p.name;
+  document.getElementById('nd-phone').textContent=p.phone||'';
+  document.getElementById('nd-addr').textContent=p.address||'';
+
+  // Show photo in current delivery
+  const ndPhoto=document.getElementById('nd-photo');
+  if(p.photos&&p.photos.length>0){
+    ndPhoto.innerHTML=`<img src="${p.photos[0].data}" style="width:100%;height:100%;object-fit:cover;cursor:pointer" onclick="viewPhoto('${p.photos[0].data}','${p.name}')">`;
+  } else {
+    ndPhoto.innerHTML='<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:24px">📦</div>';
+  }
+
+  const ndNote=document.getElementById('nd-time-note');
+  if(p.timeNote){
+    ndNote.style.display='flex';
+    ndNote.style.background=isUrgentTime(p.timeNote)?'linear-gradient(135deg,rgba(239,68,68,0.15),rgba(220,38,38,0.1))':'linear-gradient(135deg,rgba(251,191,36,0.12),rgba(245,158,11,0.08))';
+    ndNote.style.border=isUrgentTime(p.timeNote)?'1px solid rgba(239,68,68,0.3)':'1px solid rgba(251,191,36,0.3)';
+    document.getElementById('nd-time-text').textContent=p.timeNote;
+    document.getElementById('nd-time-text').style.color=isUrgentTime(p.timeNote)?'var(--red)':'var(--yellow)';
+  } else {
+    ndNote.style.display='none';
+  }
+}
+
+// ============================================================
+// ROUTE
+// ============================================================
+function getPendingOrdered(){
+  return parcels.filter(p=>!p.delivered).sort((a,b)=>{
+    const aU=a.timeNote&&isUrgentTime(a.timeNote),bU=b.timeNote&&isUrgentTime(b.timeNote);
+    if(aU&&!bU)return -1;if(!aU&&bU)return 1;
+    if(a.routeOrder!==undefined&&b.routeOrder!==undefined)return a.routeOrder-b.routeOrder;
+    if(a.lat&&!b.lat)return -1;if(!a.lat&&b.lat)return 1;
+    return 0;
+  });
+}
+
+function startRoute(){
+  const pending=getPendingOrdered();
+  if(pending.length===0){showToast('Koi pending parcel nahi!','error');return;}
+  optimizeRoute(pending);routeStarted=true;currentDeliveryIdx=0;renderHome();
+  showToast('Route shuru! 🚀','success');
+}
+
+function optimizeRoute(pending){
+  const wL=pending.filter(p=>p.lat&&p.lng),nL=pending.filter(p=>!p.lat||!p.lng);
+  if(wL.length<=1){pending.forEach((p,i)=>p.routeOrder=i);saveData();return;}
+  let uv=[...wL],ord=[],cur=uv.shift();ord.push(cur);
+  while(uv.length>0){
+    let nn=null,md=Infinity;
+    for(const p of uv){const d=distKm(cur.lat,cur.lng,p.lat,p.lng);if(d<md){md=d;nn=p;}}
+    uv=uv.filter(p=>p!==nn);ord.push(nn);cur=nn;
+  }
+  [...ord,...nL].forEach((p,i)=>p.routeOrder=i);saveData();
+}
+
+function distKm(a,b,c,d){const R=6371,dL=(c-a)*Math.PI/180,dG=(d-b)*Math.PI/180,x=Math.sin(dL/2)**2+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(dG/2)**2;return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));}
+function navigateCurrent(){const p=getPendingOrdered()[currentDeliveryIdx];if(p)instantNavigate(p);}
+function callCurrent(){const p=getPendingOrdered()[currentDeliveryIdx];if(p?.phone)window.open('tel:'+p.phone);}
+function markCurrentDelivered(){
+  const pending=getPendingOrdered();const p=pending[currentDeliveryIdx]||pending[0];if(!p)return;
+  const idx=parcels.findIndex(x=>x.id===p.id);
+  if(idx!==-1){parcels[idx].delivered=true;parcels[idx].deliveredAt=new Date().toISOString();saveData();}
+  showToast('✅ Delivered: '+p.name,'success');
+  if(getPendingOrdered().length===0){routeStarted=false;showToast('🎉 Sab deliver ho gaye!','success');}
+  if(googleToken) setTimeout(()=>syncToDrive(),3000);
+  renderHome();
+}
+
+// ============================================================
+// PARCELS LIST
+// ============================================================
+function setFilter(btn,filter){
+  currentFilter=filter;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.className='btn btn-ghost btn-sm filter-btn');
+  btn.className='btn btn-primary btn-sm filter-btn';
+  renderParcels();
+}
+
+function renderParcels(){
+  const search=(document.getElementById('search-input')?.value||'').toLowerCase();
+  let list=[...parcels];
+  if(currentFilter==='pending')list=list.filter(p=>!p.delivered);
+  else if(currentFilter==='locked')list=list.filter(p=>p.locationLocked);
+  else if(currentFilter==='done')list=list.filter(p=>p.delivered);
+  else if(currentFilter==='timed')list=list.filter(p=>p.timeNote&&!p.delivered);
+  else if(currentFilter==='photos')list=list.filter(p=>p.photos&&p.photos.length>0);
+  if(search)list=list.filter(p=>p.name.toLowerCase().includes(search)||(p.phone||'').includes(search)||(p.address||'').toLowerCase().includes(search)||(p.barcode||'').toLowerCase().includes(search)||(p.timeNote||'').toLowerCase().includes(search));
+  const el=document.getElementById('parcels-list');
+  if(list.length===0){el.innerHTML='<div class="empty-state"><div style="font-size:48px">📭</div><div>Koi parcel nahi mila</div></div>';return;}
+  el.innerHTML=list.map((p,i)=>parcelCardHTML(p,i+1,false,true)).join('');
+}
+
+function parcelCardHTML(p,num,isNext=false,showActions=false){
+  const urgent=p.timeNote&&isUrgentTime(p.timeNote)&&!p.delivered;
+  const hasPhoto=p.photos&&p.photos.length>0;
+  let cardClass=p.delivered?'delivered':isNext?'selected-card':'';
+  if(p.timeNote&&!p.delivered)cardClass+=' has-time';
+  if(urgent)cardClass+=' urgent-time';
+  if(hasPhoto)cardClass+=' has-photo';
+
+  const numBadgeClass=p.delivered?'done':p.locationLocked?'locked':'';
+  const thumbHtml=hasPhoto
+    ?`<div class="parcel-thumb" onclick="viewPhoto('${p.photos[0].data}','${p.name}');event.stopPropagation()"><img src="${p.photos[0].data}"><div class="parcel-num-badge ${numBadgeClass}">${num}</div></div>`
+    :`<div class="parcel-thumb"><div class="parcel-thumb-placeholder">${p.delivered?'✅':p.locationLocked?'🔒':'📦'}</div><div class="parcel-num-badge ${numBadgeClass}">${num}</div></div>`;
+
+  const timeBlock=p.timeNote&&!p.delivered?`<div class="card-time-note ${urgent?'urgent':''}"><span style="font-size:15px">${urgent?'🚨':'⏰'}</span><span>${p.timeNote}</span></div>`:'';
+
+  const photosBlock=hasPhoto&&showActions?`<div style="padding:0 14px 8px;display:flex;gap:6px;overflow-x:auto">${p.photos.slice(0,4).map(ph=>`<div style="width:50px;height:50px;border-radius:8px;overflow:hidden;flex-shrink:0;cursor:pointer" onclick="viewPhoto('${ph.data}','${p.name}');event.stopPropagation()"><img src="${ph.data}" style="width:100%;height:100%;object-fit:cover"></div>`).join('')}${p.photos.length>4?`<div style="width:50px;height:50px;border-radius:8px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--text2);flex-shrink:0">+${p.photos.length-4}</div>`:''}</div>`:'';
+
+  const actions=showActions?`
+    <div class="parcel-actions">
+      <button class="action-chip chip-nav" onclick="selectParcel('${p.id}');event.stopPropagation()">📍 Select</button>
+      ${p.lat?`<button class="action-chip chip-nav" onclick="instantNavigate(parcels.find(x=>x.id==='${p.id}'));event.stopPropagation()">🗺️ Go</button>`:''}
+      ${p.phone?`<button class="action-chip chip-call" onclick="window.open('tel:${p.phone}');event.stopPropagation()">📞</button>`:''}
+      <button class="action-chip chip-photo" onclick="addPhotoToParcel('${p.id}');event.stopPropagation()">📸</button>
+      <button class="action-chip chip-edit" onclick="editParcel('${p.id}');event.stopPropagation()">✏</button>
+      ${!p.delivered?`<button class="action-chip chip-done" onclick="quickDeliver('${p.id}');event.stopPropagation()">✓</button>`:''}
+      <button class="action-chip chip-del" onclick="deleteParcel('${p.id}');event.stopPropagation()">🗑</button>
+    </div>`:'';
+
+  return `<div class="parcel-card ${cardClass}" id="pc-${p.id}" onclick="selectParcel('${p.id}')">
+    <div class="parcel-header">
+      ${thumbHtml}
+      <div class="parcel-info">
+        <div class="parcel-name">${p.name}</div>
+        <div class="parcel-sub">${p.phone||''} ${p.address?'• '+p.address:''}</div>
+        ${p.barcode?`<div style="font-size:11px;color:var(--accent2);margin-top:2px">📷 ${p.barcode}</div>`:''}
+        ${hasPhoto?`<div style="font-size:11px;color:var(--teal);margin-top:2px">📸 ${p.photos.length} photo${p.photos.length>1?'s':''}</div>`:''}
+      </div>
+    </div>
+    ${timeBlock}
+    ${photosBlock}
+    ${actions}
+  </div>`;
+}
+
+function quickDeliver(id){const idx=parcels.findIndex(x=>x.id===id);if(idx!==-1){parcels[idx].delivered=true;parcels[idx].deliveredAt=new Date().toISOString();saveData();renderParcels();if(googleToken)setTimeout(()=>syncToDrive(),3000);showToast('✅ Delivered!','success');}}
+function deleteParcel(id){if(!confirm('Delete karein?'))return;parcels=parcels.filter(p=>p.id!==id);saveData();renderParcels();showToast('Deleted','error');}
+function editParcel(id){
+  const p=parcels.find(x=>x.id===id);if(!p)return;
+  formPhotos=[...(p.photos||[])];
+  openAddModal(p);
+}
+
+// ============================================================
+// ADD/EDIT
+// ============================================================
+function openAddModal(existing=null){
+  if(!existing) formPhotos=[];
+  document.getElementById('add-modal').classList.add('active');
+  document.getElementById('modal-title').textContent=existing?'Edit Parcel':'Add New Parcel';
+  document.getElementById('edit-id').value=existing?.id||'';
+  document.getElementById('f-name').value=existing?.name||'';
+  document.getElementById('f-phone').value=existing?.phone||'';
+  document.getElementById('f-barcode').value=existing?.barcode||'';
+  document.getElementById('f-address').value=existing?.address||'';
+  document.getElementById('f-timenote').value=existing?.timeNote||'';
+  document.getElementById('f-notes').value=existing?.notes||'';
+  document.getElementById('lock-toggle').className='toggle'+(existing?.locationLocked?' on':'');
+  selectedLat=existing?.lat||null;selectedLng=existing?.lng||null;
+  updateLocDisplay();
+  renderFormPhotos();
+  if(selectedLat&&selectedLng)setTimeout(()=>initMiniMap(),100);
+}
+
+function closeModal(id){document.getElementById(id).classList.remove('active');if(id==='add-modal'){selectedLat=null;selectedLng=null;}}
+
+function updateLocDisplay(){
+  const el=document.getElementById('loc-display');
+  if(selectedLat&&selectedLng){el.textContent=`✅ ${selectedLat.toFixed(6)}, ${selectedLng.toFixed(6)}`;el.style.color='var(--green)';document.getElementById('mini-map-wrap').style.display='block';}
+  else{el.textContent='Not set — tap "Pick on Map"';el.style.color='var(--text2)';document.getElementById('mini-map-wrap').style.display='none';}
+}
+
+function initMiniMap(){
+  if(!selectedLat||!selectedLng)return;
+  if(!miniMap){miniMap=L.map('mini-map',{zoomControl:false,attributionControl:false,dragging:false,scrollWheelZoom:false});L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(miniMap);}
+  miniMap.setView([selectedLat,selectedLng],17);
+  if(miniMarker)miniMap.removeLayer(miniMarker);
+  miniMarker=L.marker([selectedLat,selectedLng]).addTo(miniMap);
+  setTimeout(()=>miniMap.invalidateSize(),100);
+}
+
+function saveParcel(){
+  const name=document.getElementById('f-name').value.trim();
+  if(!name){showToast('Name required!','error');return;}
+  const id=document.getElementById('edit-id').value;
+  const data={name,phone:document.getElementById('f-phone').value.trim(),barcode:document.getElementById('f-barcode').value.trim(),address:document.getElementById('f-address').value.trim(),timeNote:document.getElementById('f-timenote').value.trim(),notes:document.getElementById('f-notes').value.trim(),locationLocked:document.getElementById('lock-toggle').classList.contains('on'),lat:selectedLat,lng:selectedLng,photos:[...formPhotos]};
+  if(id){const idx=parcels.findIndex(p=>p.id===id);if(idx!==-1)parcels[idx]={...parcels[idx],...data,updatedAt:new Date().toISOString()};}
+  else parcels.push({...data,id:genId(),delivered:false,createdAt:new Date().toISOString()});
+  saveData();closeModal('add-modal');renderParcels();renderHome();
+  if(googleToken)setTimeout(()=>syncToDrive(),2000);
+  showToast(id?'✅ Updated!':'✅ Parcel added!','success');
+}
+
+// ============================================================
+// LOCATION PICKER
+// ============================================================
+function openLocationPicker(){
+  document.getElementById('location-modal').classList.add('active');
+  setTimeout(()=>{
+    if(!pickerMap){pickerMap=L.map('location-picker-map',{zoomControl:true,attributionControl:false});L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(pickerMap);pickerMap.setView(selectedLat?[selectedLat,selectedLng]:[28.6139,77.2090],selectedLat?18:11);pickerMap.on('moveend',onPickerMoveEnd);pickerMap.on('move',onPickerMove);}
+    else{pickerMap.invalidateSize();if(selectedLat)pickerMap.setView([selectedLat,selectedLng],18);}
+    onPickerMoveEnd();
+  },150);
+}
+
+function onPickerMove(){const c=pickerMap.getCenter();document.getElementById('picker-coords').textContent=`${c.lat.toFixed(7)}, ${c.lng.toFixed(7)}`;}
+async function onPickerMoveEnd(){
+  const c=pickerMap.getCenter();document.getElementById('picker-coords').textContent=`${c.lat.toFixed(7)}, ${c.lng.toFixed(7)}`;
+  document.getElementById('picker-address').textContent='📡 Address dhundh raha hai...';
+  try{const r=await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${c.lat}&lon=${c.lng}&format=json&zoom=18`);const d=await r.json();document.getElementById('picker-address').textContent=d.display_name||`${c.lat.toFixed(6)}, ${c.lng.toFixed(6)}`;}
+  catch{document.getElementById('picker-address').textContent=`${c.lat.toFixed(6)}, ${c.lng.toFixed(6)}`;}
+}
+
+function confirmLocation(){
+  const c=pickerMap.getCenter();selectedLat=c.lat;selectedLng=c.lng;
+  const addr=document.getElementById('picker-address').textContent;
+  if(addr&&!addr.startsWith('📡'))if(!document.getElementById('f-address').value.trim())document.getElementById('f-address').value=addr;
+  closeLocationPicker();updateLocDisplay();setTimeout(()=>initMiniMap(),100);showToast('📍 Location saved!','success');
+}
+function closeLocationPicker(){document.getElementById('location-modal').classList.remove('active');}
+
+function goToMyLocation(){
+  const box=document.getElementById('gps-box');const title=document.getElementById('gps-title');const sub=document.getElementById('gps-sub');
+  box.className='gps-box show gps-warn';title.textContent='📡 GPS dhundh raha hai...';sub.textContent='Wait karein...';
+  if(!navigator.geolocation){showToast('GPS not available','error');return;}
+  navigator.geolocation.getCurrentPosition(pos=>{
+    const lat=pos.coords.latitude,lng=pos.coords.longitude,acc=Math.round(pos.coords.accuracy);
+    pickerMap.setView([lat,lng],19);
+    if(acc<=20){box.className='gps-box show gps-ok';title.textContent=`✅ Bilkul Exact! ±${acc}m`;sub.textContent='Ghar ke darwaze pe pin lagao!';}
+    else if(acc<=60){box.className='gps-box show gps-warn';title.textContent=`⚠️ GPS Mila ±${acc}m`;sub.textContent='Khule mein jao better ke liye';}
+    else{box.className='gps-box show gps-bad';title.textContent=`❌ GPS Weak ±${acc}m`;sub.textContent='Bahar jaao ya manually pin lagao';}
+    showToast(`📍 GPS: ±${acc}m`,'success');
+  },()=>{box.className='gps-box show gps-bad';title.textContent='❌ Permission Denied';sub.textContent='Settings mein Location ON karein';},{enableHighAccuracy:true,timeout:15000,maximumAge:0});
+}
+
+// ============================================================
+// SCANNER
+// ============================================================
+async function startScanner(){
+  if(scanActive)return;scanActive=true;document.getElementById('scan-result').style.display='none';
+  try{scannerStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}}});const v=document.getElementById('scanner-video');v.srcObject=scannerStream;v.play();v.addEventListener('loadeddata',()=>scanLoop(v,'main'));}
+  catch{showToast('Camera permission denied','error');scanActive=false;}
+}
+function scanLoop(video,type){const canvas=document.createElement('canvas');const ctx=canvas.getContext('2d');function tick(){if(video.readyState===video.HAVE_ENOUGH_DATA){canvas.width=video.videoWidth;canvas.height=video.videoHeight;ctx.drawImage(video,0,0);try{const img=ctx.getImageData(0,0,canvas.width,canvas.height);const code=jsQR(img.data,img.width,img.height,{inversionAttempts:'dontInvert'});if(code){onCodeScanned(code.data,type);return;}}catch{}}if(type==='main'&&scanActive)scannerAnimFrame=requestAnimationFrame(tick);else if(type==='form'&&formScannerStream)formScannerAnimFrame=requestAnimationFrame(tick);}tick();}
+function onCodeScanned(code,type){if(type==='main')stopScanner();document.getElementById('scan-code').textContent=code;document.getElementById('scan-result').style.display='block';const match=parcels.find(p=>p.barcode===code);document.getElementById('scan-matched').innerHTML=match?`<div class="card" style="border-color:var(--green)"><div style="color:var(--green);font-weight:700;margin-bottom:6px">✅ Found: ${match.name}</div>${match.timeNote?`<div class="card-time-note"><span>⏰</span><span>${match.timeNote}</span></div>`:''}</div>`:`<div style="color:var(--text2);padding:8px 0">No match found.</div>`;if(match){showToast('📦 Found: '+match.name,'success');selectParcel(match.id);}window._lastCode=code;}
+function stopScanner(){scanActive=false;if(scannerStream){scannerStream.getTracks().forEach(t=>t.stop());scannerStream=null;}if(scannerAnimFrame){cancelAnimationFrame(scannerAnimFrame);scannerAnimFrame=null;}}
+function openScanner(){switchScreen('scan',document.querySelectorAll('.nav-btn')[2]);startScanner();}
+function addScannedAsNew(){openAddModal();document.getElementById('f-barcode').value=window._lastCode||'';}
+async function scanForForm(){document.getElementById('form-scanner-modal').classList.add('active');try{formScannerStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}}});const v=document.getElementById('form-scanner-video');v.srcObject=formScannerStream;v.play();v.addEventListener('loadeddata',()=>scanLoop(v,'form'));}catch{showToast('Camera denied','error');}}
+function closeFormScanner(){document.getElementById('form-scanner-modal').classList.remove('active');if(formScannerStream){formScannerStream.getTracks().forEach(t=>t.stop());formScannerStream=null;}if(formScannerAnimFrame){cancelAnimationFrame(formScannerAnimFrame);formScannerAnimFrame=null;}}
+function manualSearch(){const code=document.getElementById('manual-code').value.trim();if(code)onCodeScanned(code,'manual');}
+
+// ============================================================
+// IMPORT/EXPORT
+// ============================================================
+function exportData(fmt){
+  if(fmt==='json'){dl(new Blob([JSON.stringify({version:4,exportedAt:new Date().toISOString(),parcels},null,2)],{type:'application/json'}),`dp_backup_${ds()}.json`);showToast('💾 Exported!','success');}
+  else{const h=['ID','Name','Phone','Barcode','Address','TimeNote','Notes','Lat','Lng','Locked','Photos','Delivered'];const rows=parcels.map(p=>[p.id,p.name,p.phone||'',p.barcode||'',(p.address||'').replace(/,/g,'|'),(p.timeNote||''),(p.notes||''),p.lat||'',p.lng||'',p.locationLocked?'Yes':'No',(p.photos||[]).length,p.delivered?'Yes':'No']);dl(new Blob([[h,...rows].map(r=>r.join(',')).join('\n')],{type:'text/csv'}),`dp_${ds()}.csv`);showToast('📊 Exported!','success');}
+}
+function dl(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();}
+function ds(){return new Date().toISOString().slice(0,10);}
+function importData(){document.getElementById('import-file').click();}
+function handleImport(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{const d=JSON.parse(ev.target.result);const imp=d.parcels||d;if(!Array.isArray(imp))throw 0;const ex=new Set(parcels.map(p=>p.id));let n=0;imp.forEach(p=>{if(!ex.has(p.id)){parcels.push(p);n++;}});saveData();renderHome();renderParcels();updateIOScreen();showToast(`✅ ${n} parcels imported!`,'success');}catch{showToast('❌ Invalid file','error');}e.target.value='';};r.readAsText(f);}
+function clearAllData(){if(!confirm('Sab data delete?'))return;if(!confirm('Sure? SARI DATA JAYEGI!'))return;parcels=[];saveData();routeStarted=false;clearSelectedParcel();renderHome();renderParcels();updateIOScreen();showToast('Cleared','error');}
+function updateIOScreen(){document.getElementById('app-url').textContent=window.location.href;const sz=new Blob([localStorage.getItem('dp_v4')||'']).size;document.getElementById('storage-info').innerHTML=`<div style="display:flex;justify-content:space-between;margin-bottom:8px"><span style="color:var(--text2)">Parcels</span><span style="font-weight:700">${parcels.length}</span></div><div style="display:flex;justify-content:space-between;margin-bottom:8px"><span style="color:var(--text2)">Storage</span><span style="font-weight:700">${(sz/1024).toFixed(1)} KB</span></div><div style="display:flex;justify-content:space-between;margin-bottom:8px"><span style="color:var(--text2)">Photos</span><span style="font-weight:700;color:var(--teal)">${parcels.reduce((s,p)=>s+(p.photos?.length||0),0)}</span></div><div style="display:flex;justify-content:space-between"><span style="color:var(--text2)">Drive Sync</span><span style="font-weight:700;color:${googleToken?'var(--green)':'var(--text3)'}">${googleToken?'Active':'Not connected'}</span></div>`;}
+function shareApp(){if(navigator.share)navigator.share({title:'DeliverPro',url:window.location.href});else{navigator.clipboard?.writeText(window.location.href);showToast('Link copied!','success');}}
+
+// ============================================================
+// TOAST
+// ============================================================
+function showToast(msg,type=''){const t=document.getElementById('toast');t.textContent=msg;t.className='toast show '+type;setTimeout(()=>t.className='toast',2800);}
+
+// ============================================================
+// INIT
+// ============================================================
+loadData();updateStats();
+setTimeout(()=>{renderHome();initGoogleLogin();},200);
+document.getElementById('add-modal').addEventListener('click',function(e){if(e.target===this)closeModal('add-modal');});
+document.getElementById('form-scanner-modal').addEventListener('click',function(e){if(e.target===this)closeFormScanner();});
+document.querySelectorAll('.nav-btn').forEach((btn,i)=>{btn.addEventListener('click',()=>{if(i!==2)stopScanner();});});
+</script>
+</body>
+</html>
