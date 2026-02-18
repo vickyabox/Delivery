@@ -1,0 +1,1484 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0F172A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="DeliverPro">
+<title>DeliverPro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
+
+<style>
+:root {
+  --bg: #0A0F1E;
+  --surface: #111827;
+  --surface2: #1C2537;
+  --surface3: #243049;
+  --accent: #3B82F6;
+  --accent2: #6366F1;
+  --green: #10B981;
+  --orange: #F59E0B;
+  --red: #EF4444;
+  --purple: #8B5CF6;
+  --text: #F1F5F9;
+  --text2: #94A3B8;
+  --text3: #475569;
+  --border: rgba(255,255,255,0.07);
+  --glow: 0 0 30px rgba(59,130,246,0.15);
+  --card-shadow: 0 4px 24px rgba(0,0,0,0.4);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+  padding-bottom: 80px;
+}
+
+/* HEADER */
+.header {
+  background: linear-gradient(135deg, #0F172A 0%, #1E2D4D 100%);
+  padding: 16px 20px 12px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(20px);
+}
+.header-top { display:flex; justify-content:space-between; align-items:center; }
+.logo { font-family:'Syne',sans-serif; font-size:22px; font-weight:800; background:linear-gradient(135deg,#3B82F6,#8B5CF6); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+.header-stats { display:flex; gap:16px; margin-top:10px; }
+.hstat { text-align:center; }
+.hstat-val { font-family:'Syne',sans-serif; font-size:18px; font-weight:700; color:var(--accent); }
+.hstat-label { font-size:10px; color:var(--text2); text-transform:uppercase; letter-spacing:1px; }
+
+/* NAV */
+.bottom-nav {
+  position:fixed; bottom:0; left:0; right:0;
+  background: rgba(17,24,39,0.95);
+  backdrop-filter: blur(20px);
+  border-top: 1px solid var(--border);
+  display:flex;
+  z-index:200;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.nav-btn {
+  flex:1; display:flex; flex-direction:column; align-items:center;
+  padding:10px 4px 8px;
+  background:none; border:none; color:var(--text3);
+  font-family:'DM Sans',sans-serif; font-size:10px;
+  cursor:pointer; transition:all 0.2s; gap:4px;
+  letter-spacing:0.3px;
+}
+.nav-btn.active { color:var(--accent); }
+.nav-btn svg { width:22px; height:22px; }
+.nav-btn.active svg { filter: drop-shadow(0 0 6px rgba(59,130,246,0.6)); }
+
+/* SCREENS */
+.screen { display:none; padding:16px; animation: fadeIn 0.3s ease; }
+.screen.active { display:block; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+/* CARDS */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: var(--card-shadow);
+}
+.card-glow { box-shadow: var(--card-shadow), var(--glow); border-color: rgba(59,130,246,0.2); }
+
+/* SECTION TITLE */
+.section-title {
+  font-family:'Syne',sans-serif;
+  font-size:13px; font-weight:700;
+  text-transform:uppercase; letter-spacing:2px;
+  color:var(--text2); margin-bottom:12px;
+  display:flex; align-items:center; gap:8px;
+}
+.section-title::after { content:''; flex:1; height:1px; background:var(--border); }
+
+/* FORM */
+.form-group { margin-bottom:14px; }
+.form-label { font-size:11px; color:var(--text2); text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; display:block; font-weight:600; }
+.form-input {
+  width:100%; padding:12px 14px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  font-family:'DM Sans',sans-serif; font-size:15px;
+  outline:none; transition:border-color 0.2s;
+}
+.form-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+.form-input::placeholder { color:var(--text3); }
+textarea.form-input { resize:none; height:70px; }
+
+/* BUTTONS */
+.btn {
+  display:flex; align-items:center; justify-content:center; gap:8px;
+  padding:13px 20px; border-radius:12px; border:none;
+  font-family:'DM Sans',sans-serif; font-size:15px; font-weight:600;
+  cursor:pointer; transition:all 0.2s; width:100%;
+}
+.btn-primary { background:linear-gradient(135deg,#3B82F6,#6366F1); color:#fff; }
+.btn-primary:active { transform:scale(0.97); opacity:0.9; }
+.btn-green { background:linear-gradient(135deg,#10B981,#059669); color:#fff; }
+.btn-orange { background:linear-gradient(135deg,#F59E0B,#D97706); color:#fff; }
+.btn-red { background:linear-gradient(135deg,#EF4444,#DC2626); color:#fff; }
+.btn-ghost { background:var(--surface2); color:var(--text); border:1px solid var(--border); }
+.btn-sm { padding:8px 14px; font-size:13px; border-radius:8px; width:auto; }
+
+/* PARCEL CARD */
+.parcel-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+  margin-bottom: 10px;
+  transition: all 0.2s;
+}
+.parcel-card:active { transform:scale(0.99); }
+.parcel-card.delivered { opacity:0.5; }
+.parcel-card.next-delivery { border-color: var(--orange); box-shadow: 0 0 20px rgba(245,158,11,0.2); }
+
+.parcel-header {
+  display:flex; align-items:center; gap:12px; padding:14px;
+  cursor:pointer;
+}
+.parcel-num {
+  width:36px; height:36px; border-radius:10px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Syne',sans-serif; font-weight:700; font-size:14px;
+  flex-shrink:0;
+}
+.parcel-num.locked { background:linear-gradient(135deg,var(--purple),#7C3AED); }
+.parcel-num.delivered-num { background:linear-gradient(135deg,var(--green),#059669); }
+
+.parcel-info { flex:1; min-width:0; }
+.parcel-name { font-weight:600; font-size:15px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.parcel-sub { font-size:12px; color:var(--text2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:2px; }
+
+.parcel-badges { display:flex; gap:6px; flex-shrink:0; }
+.badge {
+  font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;
+  padding:3px 7px; border-radius:6px;
+}
+.badge-lock { background:rgba(139,92,246,0.2); color:var(--purple); }
+.badge-scan { background:rgba(59,130,246,0.2); color:var(--accent); }
+.badge-done { background:rgba(16,185,129,0.2); color:var(--green); }
+.badge-pending { background:rgba(245,158,11,0.2); color:var(--orange); }
+
+.parcel-actions {
+  display:flex; gap:8px; padding:0 14px 14px;
+  flex-wrap:wrap;
+}
+.action-chip {
+  display:flex; align-items:center; gap:5px;
+  padding:7px 12px; border-radius:8px; border:none;
+  font-family:'DM Sans',sans-serif; font-size:12px; font-weight:600;
+  cursor:pointer; transition:all 0.15s;
+}
+.action-chip:active { transform:scale(0.95); }
+.chip-nav { background:rgba(59,130,246,0.15); color:var(--accent); }
+.chip-call { background:rgba(16,185,129,0.15); color:var(--green); }
+.chip-edit { background:rgba(245,158,11,0.15); color:var(--orange); }
+.chip-del { background:rgba(239,68,68,0.15); color:var(--red); }
+.chip-done { background:rgba(16,185,129,0.15); color:var(--green); }
+.chip-scan { background:rgba(99,102,241,0.15); color:var(--accent2); }
+
+/* MAP */
+#map { height:300px; border-radius:12px; overflow:hidden; border:1px solid var(--border); }
+#location-picker-map { height:100%; border-radius:0; border:none; }
+
+/* MODAL */
+.modal-overlay {
+  display:none; position:fixed; inset:0;
+  background:rgba(0,0,0,0.8); backdrop-filter:blur(8px);
+  z-index:500; align-items:flex-end;
+}
+.modal-overlay.active { display:flex; }
+.modal {
+  background: var(--surface);
+  border-radius:24px 24px 0 0;
+  padding:20px;
+  width:100%;
+  max-height:92vh;
+  overflow-y:auto;
+  animation: slideUp 0.3s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+
+.modal-handle { width:40px; height:4px; background:var(--surface3); border-radius:2px; margin:0 auto 16px; }
+.modal-title { font-family:'Syne',sans-serif; font-size:20px; font-weight:700; margin-bottom:20px; }
+
+/* LOCATION PICKER FULL SCREEN */
+.location-modal {
+  position:fixed; inset:0;
+  background: var(--bg);
+  z-index:600;
+  display:none;
+  flex-direction:column;
+}
+.location-modal.active { display:flex; }
+.location-modal-header {
+  padding:16px 20px;
+  background:var(--surface);
+  border-bottom:1px solid var(--border);
+  display:flex; align-items:center; gap:12px;
+  flex-shrink:0;
+}
+.location-modal-map { flex:1; position:relative; }
+.location-modal-bottom {
+  background:var(--surface);
+  padding:16px 20px;
+  border-top:1px solid var(--border);
+  flex-shrink:0;
+}
+
+/* SCANNER */
+.scanner-container {
+  position:relative;
+  background:#000;
+  border-radius:16px;
+  overflow:hidden;
+  aspect-ratio:1;
+  max-width:320px;
+  margin:0 auto;
+}
+#scanner-video { width:100%; height:100%; object-fit:cover; }
+.scanner-overlay {
+  position:absolute; inset:0;
+  display:flex; align-items:center; justify-content:center;
+}
+.scanner-frame {
+  width:65%; aspect-ratio:1;
+  border:3px solid var(--accent);
+  border-radius:16px;
+  box-shadow: 0 0 0 9999px rgba(0,0,0,0.5);
+  position:relative;
+}
+.scanner-line {
+  position:absolute; left:0; right:0; height:2px;
+  background:linear-gradient(90deg, transparent, var(--accent), transparent);
+  animation: scan 2s linear infinite;
+  top:0;
+}
+@keyframes scan { 0%{top:0} 100%{top:100%} }
+
+.scanner-corners::before, .scanner-corners::after {
+  content:''; position:absolute;
+  width:20px; height:20px;
+  border-color:var(--accent); border-style:solid;
+}
+.scanner-corners::before { top:-3px; left:-3px; border-width:3px 0 0 3px; border-radius:4px 0 0 0; }
+.scanner-corners::after { bottom:-3px; right:-3px; border-width:0 3px 3px 0; border-radius:0 0 4px 0; }
+
+/* ROUTE PROGRESS */
+.route-progress-bar {
+  height:6px; background:var(--surface3); border-radius:3px; overflow:hidden;
+  margin:8px 0;
+}
+.route-progress-fill {
+  height:100%;
+  background:linear-gradient(90deg,var(--green),#34D399);
+  border-radius:3px;
+  transition:width 0.5s ease;
+}
+
+/* STATS GRID */
+.stats-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-bottom:16px; }
+.stat-card {
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:14px;
+  text-align:center;
+}
+.stat-val { font-family:'Syne',sans-serif; font-size:28px; font-weight:800; }
+.stat-label { font-size:11px; color:var(--text2); text-transform:uppercase; letter-spacing:1px; margin-top:4px; }
+
+/* SEARCH */
+.search-bar {
+  display:flex; align-items:center; gap:10px;
+  background:var(--surface2);
+  border:1px solid var(--border);
+  border-radius:12px; padding:10px 14px;
+  margin-bottom:12px;
+}
+.search-bar input {
+  background:none; border:none; color:var(--text);
+  font-family:'DM Sans',sans-serif; font-size:15px;
+  outline:none; flex:1;
+}
+.search-bar input::placeholder { color:var(--text3); }
+
+/* TOGGLE */
+.toggle-row { display:flex; align-items:center; justify-content:space-between; padding:12px 0; }
+.toggle-info { flex:1; }
+.toggle-title { font-weight:600; font-size:14px; }
+.toggle-sub { font-size:12px; color:var(--text2); margin-top:2px; }
+.toggle {
+  width:48px; height:26px;
+  background:var(--surface3); border-radius:13px;
+  position:relative; cursor:pointer; transition:background 0.2s;
+  flex-shrink:0; border:none;
+}
+.toggle.on { background:var(--accent); }
+.toggle::after {
+  content:''; position:absolute;
+  width:20px; height:20px; border-radius:50%;
+  background:#fff; top:3px; left:3px;
+  transition:transform 0.2s;
+}
+.toggle.on::after { transform:translateX(22px); }
+
+/* NOTIFICATION */
+.toast {
+  position:fixed; bottom:90px; left:50%; transform:translateX(-50%);
+  background:var(--surface); color:var(--text);
+  padding:12px 20px; border-radius:12px;
+  font-size:14px; font-weight:500;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  border:1px solid var(--border);
+  z-index:1000; opacity:0; transition:opacity 0.3s;
+  white-space:nowrap; max-width:90vw;
+}
+.toast.show { opacity:1; }
+.toast.success { border-color:rgba(16,185,129,0.4); }
+.toast.error { border-color:rgba(239,68,68,0.4); }
+
+/* EMPTY STATE */
+.empty-state {
+  text-align:center; padding:48px 20px;
+  color:var(--text3);
+}
+.empty-icon { font-size:48px; margin-bottom:12px; }
+.empty-text { font-size:15px; }
+
+/* IMPORT/EXPORT */
+.io-btn {
+  display:flex; align-items:center; gap:12px;
+  padding:14px 16px; border-radius:12px;
+  background:var(--surface2); border:1px solid var(--border);
+  color:var(--text); font-family:'DM Sans',sans-serif;
+  font-size:14px; font-weight:500; cursor:pointer;
+  transition:all 0.2s; margin-bottom:10px; width:100%;
+  text-align:left;
+}
+.io-btn:active { transform:scale(0.98); }
+.io-icon { width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0; }
+
+/* LEAFLET DARK */
+.leaflet-container { background:#1a2035 !important; }
+.leaflet-tile { filter: brightness(0.85) saturate(0.8) hue-rotate(180deg) invert(0.9); }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-top">
+    <div class="logo">⚡ DeliverPro</div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-ghost btn-sm" onclick="openScanner()" style="padding:8px 10px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h2v2h-2zM18 14h3v2h-3zM14 18h3v2h-3zM18 18h3v3h-3z"/></svg>
+      </button>
+      <button class="btn btn-primary btn-sm" onclick="openAddModal()">+ Add</button>
+    </div>
+  </div>
+  <div class="header-stats">
+    <div class="hstat"><div class="hstat-val" id="stat-total">0</div><div class="hstat-label">Total</div></div>
+    <div class="hstat"><div class="hstat-val" style="color:var(--orange)" id="stat-pending">0</div><div class="hstat-label">Pending</div></div>
+    <div class="hstat"><div class="hstat-val" style="color:var(--green)" id="stat-done">0</div><div class="hstat-label">Done</div></div>
+    <div class="hstat"><div class="hstat-val" style="color:var(--purple)" id="stat-locked">0</div><div class="hstat-label">Locked</div></div>
+  </div>
+</div>
+
+<!-- SCREENS -->
+
+<!-- HOME -->
+<div class="screen active" id="screen-home">
+  <div class="section-title">Today's Route</div>
+
+  <!-- Route Map -->
+  <div class="card card-glow" style="padding:12px;">
+    <div id="map"></div>
+    <div style="margin-top:12px;">
+      <div class="route-progress-bar"><div class="route-progress-fill" id="route-progress" style="width:0%"></div></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;">
+        <span style="font-size:13px;color:var(--text2)" id="route-text">0 stops planned</span>
+        <button class="btn btn-green btn-sm" onclick="startRoute()" id="start-route-btn">▶ Start Route</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Next Delivery -->
+  <div id="next-delivery-card" style="display:none">
+    <div class="section-title">Current Delivery</div>
+    <div class="card" style="border-color:var(--orange);box-shadow:0 0 20px rgba(245,158,11,0.15)">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+        <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#F59E0B,#D97706);display:flex;align-items:center;justify-content:center;font-size:20px;">📦</div>
+        <div style="flex:1;min-width:0;">
+          <div id="nd-name" style="font-weight:700;font-size:16px;"></div>
+          <div id="nd-phone" style="font-size:13px;color:var(--text2);"></div>
+          <div id="nd-addr" style="font-size:12px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-primary" style="flex:1;padding:11px;" onclick="navigateCurrent()">🗺 Navigate</button>
+        <button class="btn btn-green" style="flex:1;padding:11px;" onclick="markCurrentDelivered()">✓ Delivered</button>
+        <button class="btn btn-ghost btn-sm" onclick="callCurrent()" style="padding:11px 14px;">📞</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pending List Preview -->
+  <div class="section-title" style="margin-top:4px;">Pending Parcels</div>
+  <div id="pending-preview"></div>
+</div>
+
+<!-- PARCELS -->
+<div class="screen" id="screen-parcels">
+  <div class="search-bar">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;color:var(--text3);flex-shrink:0"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    <input type="text" placeholder="Search name, phone, address..." id="search-input" oninput="renderParcels()">
+  </div>
+  <div style="display:flex;gap:8px;margin-bottom:12px;">
+    <button class="btn btn-ghost btn-sm filter-btn active" data-filter="all" onclick="setFilter(this,'all')">All</button>
+    <button class="btn btn-ghost btn-sm filter-btn" data-filter="pending" onclick="setFilter(this,'pending')">Pending</button>
+    <button class="btn btn-ghost btn-sm filter-btn" data-filter="locked" onclick="setFilter(this,'locked')">🔒 Locked</button>
+    <button class="btn btn-ghost btn-sm filter-btn" data-filter="done" onclick="setFilter(this,'done')">Done</button>
+  </div>
+  <div id="parcels-list"></div>
+</div>
+
+<!-- SCAN -->
+<div class="screen" id="screen-scan">
+  <div class="section-title">Barcode / QR Scanner</div>
+  <div class="card">
+    <div class="scanner-container">
+      <video id="scanner-video" playsinline muted autoplay></video>
+      <div class="scanner-overlay">
+        <div class="scanner-frame">
+          <div class="scanner-line"></div>
+          <div class="scanner-corners"></div>
+        </div>
+      </div>
+    </div>
+    <p style="text-align:center;color:var(--text2);font-size:13px;margin-top:12px;">Parcel ka barcode ya QR scan karo</p>
+    <div id="scan-result" style="margin-top:12px;display:none">
+      <div style="background:var(--surface2);border-radius:10px;padding:12px;border:1px solid var(--border);">
+        <div style="font-size:12px;color:var(--text2);margin-bottom:4px;">Scanned Code:</div>
+        <div id="scan-code" style="font-weight:600;font-size:16px;letter-spacing:1px;"></div>
+      </div>
+      <div id="scan-matched" style="margin-top:10px;"></div>
+      <button class="btn btn-primary" style="margin-top:10px;" onclick="addScannedAsNew()">+ Add as New Parcel</button>
+    </div>
+  </div>
+
+  <div class="section-title" style="margin-top:16px;">Manual Code Entry</div>
+  <div class="card">
+    <div class="form-group" style="margin:0;display:flex;gap:8px;">
+      <input type="text" class="form-input" id="manual-code" placeholder="Enter barcode/QR code manually..." style="flex:1;">
+      <button class="btn btn-primary btn-sm" onclick="manualSearch()" style="flex-shrink:0;">Search</button>
+    </div>
+  </div>
+</div>
+
+<!-- IMPORT/EXPORT -->
+<div class="screen" id="screen-io">
+  <div class="section-title">Backup & Restore</div>
+  <div class="card">
+    <p style="font-size:13px;color:var(--text2);margin-bottom:16px;">Apna data export karke safe rakhein. Kisi bhi device pe import kar sakte hain.</p>
+
+    <button class="io-btn" onclick="exportData('json')">
+      <div class="io-icon" style="background:rgba(59,130,246,0.15);">💾</div>
+      <div>
+        <div style="font-weight:600;">Export Full Backup (JSON)</div>
+        <div style="font-size:12px;color:var(--text2);">Sabhi parcels + locked locations</div>
+      </div>
+    </button>
+
+    <button class="io-btn" onclick="exportData('csv')">
+      <div class="io-icon" style="background:rgba(16,185,129,0.15);">📊</div>
+      <div>
+        <div style="font-weight:600;">Export as CSV (Excel)</div>
+        <div style="font-size:12px;color:var(--text2);">Excel mein kholne ke liye</div>
+      </div>
+    </button>
+
+    <button class="io-btn" onclick="importData()">
+      <div class="io-icon" style="background:rgba(245,158,11,0.15);">📂</div>
+      <div>
+        <div style="font-weight:600;">Import Backup</div>
+        <div style="font-size:12px;color:var(--text2);">JSON backup file se restore karein</div>
+      </div>
+    </button>
+
+    <input type="file" id="import-file" accept=".json" style="display:none" onchange="handleImport(event)">
+  </div>
+
+  <div class="section-title" style="margin-top:8px;">Share with Team</div>
+  <div class="card">
+    <p style="font-size:13px;color:var(--text2);margin-bottom:12px;">Is app ka link team ke saare members ke saath share karein:</p>
+    <div style="background:var(--surface2);border-radius:10px;padding:12px;margin-bottom:12px;border:1px solid var(--border);">
+      <div style="font-size:12px;color:var(--text2);margin-bottom:4px;">App URL:</div>
+      <div id="app-url" style="font-size:13px;color:var(--accent);word-break:break-all;"></div>
+    </div>
+    <button class="btn btn-primary" onclick="shareApp()">📤 Share App Link</button>
+    <p style="font-size:11px;color:var(--text3);margin-top:10px;text-align:center;">Team members "Add to Home Screen" karke install kar sakte hain</p>
+  </div>
+
+  <div class="section-title" style="margin-top:8px;">Storage Info</div>
+  <div class="card">
+    <div id="storage-info"></div>
+  </div>
+
+  <div class="section-title" style="margin-top:8px;">Danger Zone</div>
+  <div class="card">
+    <button class="btn btn-red" onclick="clearAllData()">🗑️ Clear All Data</button>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav">
+  <button class="nav-btn active" onclick="switchScreen('home',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>
+    Home
+  </button>
+  <button class="nav-btn" onclick="switchScreen('parcels',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="18" rx="2"/><path d="M8 10h8M8 14h5"/></svg>
+    Parcels
+  </button>
+  <button class="nav-btn" onclick="switchScreen('scan',this);startScanner()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h2v2h-2zM18 14h3v2h-3zM14 18h3v2h-3zM18 18h3v3h-3z"/></svg>
+    Scan
+  </button>
+  <button class="nav-btn" onclick="switchScreen('io',this);updateIOScreen()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+    Backup
+  </button>
+</nav>
+
+<!-- ADD/EDIT MODAL -->
+<div class="modal-overlay" id="add-modal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="modal-title">Add New Parcel</div>
+    <input type="hidden" id="edit-id">
+
+    <div class="form-group">
+      <label class="form-label">Customer Name *</label>
+      <input type="text" class="form-input" id="f-name" placeholder="e.g. Rahul Kumar">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Phone Number *</label>
+      <input type="tel" class="form-input" id="f-phone" placeholder="e.g. 9876543210">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Barcode / Tracking ID</label>
+      <div style="display:flex;gap:8px;">
+        <input type="text" class="form-input" id="f-barcode" placeholder="Scan ya manually enter karein" style="flex:1;">
+        <button class="btn btn-ghost btn-sm" onclick="scanForForm()" style="flex-shrink:0;padding:12px;">📷</button>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Delivery Address</label>
+      <textarea class="form-input" id="f-address" placeholder="Full delivery address..."></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Notes</label>
+      <input type="text" class="form-input" id="f-notes" placeholder="Delivery instructions...">
+    </div>
+
+    <!-- Location Section -->
+    <div style="border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:14px;">
+      <div style="padding:12px 14px;background:var(--surface2);display:flex;align-items:center;justify-content:space-between;">
+        <div>
+          <div style="font-weight:600;font-size:14px;">📍 Location</div>
+          <div id="loc-display" style="font-size:12px;color:var(--text2);margin-top:2px;">Not set</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="openLocationPicker()">Pick on Map</button>
+      </div>
+      <div id="mini-map-wrap" style="display:none;height:150px;">
+        <div id="mini-map" style="height:100%;"></div>
+      </div>
+    </div>
+
+    <!-- Lock Toggle -->
+    <div class="card" style="margin-bottom:14px;padding:12px 14px;">
+      <div class="toggle-row" style="padding:0;">
+        <div class="toggle-info">
+          <div class="toggle-title">🔒 Lock Location</div>
+          <div class="toggle-sub">Permanently save karo (change bhi kar sakte ho)</div>
+        </div>
+        <button class="toggle" id="lock-toggle" onclick="this.classList.toggle('on')"></button>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:10px;">
+      <button class="btn btn-ghost" onclick="closeModal('add-modal')" style="flex:1;">Cancel</button>
+      <button class="btn btn-primary" onclick="saveParcel()" style="flex:2;">Save Parcel</button>
+    </div>
+  </div>
+</div>
+
+<!-- LOCATION PICKER -->
+<div class="location-modal" id="location-modal">
+  <div class="location-modal-header">
+    <button class="btn btn-ghost btn-sm" onclick="closeLocationPicker()">✕</button>
+    <div style="flex:1;font-family:'Syne',sans-serif;font-weight:700;font-size:16px;">Pick Location</div>
+    <button class="btn btn-primary btn-sm" onclick="confirmLocation()">✓ Confirm</button>
+  </div>
+  <div class="location-modal-map">
+    <div id="location-picker-map"></div>
+    <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-100%);font-size:32px;pointer-events:none;z-index:1000;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.5));">📍</div>
+    <button onclick="goToMyLocation()" style="position:absolute;bottom:16px;right:16px;z-index:1000;background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:10px;cursor:pointer;box-shadow:var(--card-shadow);">📡 My Location</button>
+  </div>
+  <div class="location-modal-bottom">
+    <div style="font-size:12px;color:var(--text2);margin-bottom:4px;">Selected Address:</div>
+    <div id="picker-address" style="font-size:14px;font-weight:500;">Move map to select location</div>
+    <div id="picker-coords" style="font-size:11px;color:var(--text3);margin-top:3px;"></div>
+  </div>
+</div>
+
+<!-- SCANNER MODAL (for form) -->
+<div class="modal-overlay" id="form-scanner-modal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Scan Barcode</div>
+    <div class="scanner-container" style="max-width:100%">
+      <video id="form-scanner-video" playsinline muted autoplay></video>
+      <div class="scanner-overlay">
+        <div class="scanner-frame"><div class="scanner-line"></div><div class="scanner-corners"></div></div>
+      </div>
+    </div>
+    <button class="btn btn-ghost" style="margin-top:12px;" onclick="closeFormScanner()">Cancel</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================================================
+// DATA LAYER
+// ============================================================
+let parcels = [];
+let currentFilter = 'all';
+let routeOrder = [];
+let currentDeliveryIdx = 0;
+let routeStarted = false;
+let selectedLat = null, selectedLng = null;
+let pickerMap = null, pickerMarker = null;
+let homeMap = null;
+let miniMap = null, miniMarker = null;
+let scannerStream = null;
+let scannerAnimFrame = null;
+let formScannerStream = null;
+let formScannerAnimFrame = null;
+let scanActive = false;
+
+// Load from localStorage
+function loadData() {
+  try {
+    const saved = localStorage.getItem('deliverpro_parcels');
+    if (saved) parcels = JSON.parse(saved);
+  } catch(e) { parcels = []; }
+}
+
+function saveData() {
+  localStorage.setItem('deliverpro_parcels', JSON.stringify(parcels));
+  updateStats();
+}
+
+function generateId() {
+  return Date.now().toString(36) + Math.random().toString(36).substr(2,5);
+}
+
+// ============================================================
+// STATS
+// ============================================================
+function updateStats() {
+  const total = parcels.length;
+  const pending = parcels.filter(p => !p.delivered).length;
+  const done = parcels.filter(p => p.delivered).length;
+  const locked = parcels.filter(p => p.locationLocked).length;
+  document.getElementById('stat-total').textContent = total;
+  document.getElementById('stat-pending').textContent = pending;
+  document.getElementById('stat-done').textContent = done;
+  document.getElementById('stat-locked').textContent = locked;
+}
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function switchScreen(name, btn) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+  btn.classList.add('active');
+
+  if(name === 'home') { renderHome(); }
+  if(name === 'parcels') { renderParcels(); }
+  if(name !== 'scan') { stopScanner(); }
+}
+
+// ============================================================
+// HOME MAP
+// ============================================================
+function initHomeMap() {
+  if (homeMap) return;
+  homeMap = L.map('map', { zoomControl:true, attributionControl:false });
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(homeMap);
+  homeMap.setView([28.6139, 77.2090], 11);
+}
+
+function renderHome() {
+  initHomeMap();
+  renderRouteOnMap();
+  renderPendingPreview();
+  updateNextDeliveryCard();
+}
+
+function renderRouteOnMap() {
+  if(!homeMap) return;
+  homeMap.eachLayer(l => { if(l instanceof L.Marker || l instanceof L.Polyline) homeMap.removeLayer(l); });
+
+  const pending = parcels.filter(p => !p.delivered && p.lat && p.lng);
+  if(pending.length === 0) {
+    document.getElementById('route-text').textContent = '0 stops planned';
+    document.getElementById('route-progress').style.width = '0%';
+    return;
+  }
+
+  const total = parcels.filter(p => p.lat && p.lng).length;
+  const done = parcels.filter(p => p.delivered && p.lat && p.lng).length;
+  const pct = total > 0 ? (done/total*100) : 0;
+  document.getElementById('route-progress').style.width = pct + '%';
+  document.getElementById('route-text').textContent = pending.length + ' stops remaining';
+
+  const points = [];
+  pending.forEach((p, i) => {
+    const isNext = routeStarted && i === 0;
+    const icon = L.divIcon({
+      html: `<div style="background:${isNext?'#F59E0B':'#3B82F6'};color:#fff;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.4)">${i+1}</div>`,
+      className:'', iconSize:[28,28], iconAnchor:[14,14]
+    });
+    L.marker([p.lat, p.lng], {icon}).bindPopup(`<b>${p.name}</b><br>${p.address||''}`).addTo(homeMap);
+    points.push([p.lat, p.lng]);
+  });
+
+  if(points.length > 1) {
+    L.polyline(points, {color:'#3B82F6', weight:3, dashArray:'6,6', opacity:0.7}).addTo(homeMap);
+  }
+
+  if(points.length > 0) {
+    const bounds = L.latLngBounds(points);
+    homeMap.fitBounds(bounds, {padding:[30,30]});
+  }
+}
+
+function renderPendingPreview() {
+  const pending = getPendingOrdered();
+  const el = document.getElementById('pending-preview');
+  if(pending.length === 0) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">🎉</div><div class="empty-text">Sab parcels delivered!</div></div>';
+    return;
+  }
+  el.innerHTML = pending.slice(0,5).map((p,i) => parcelCardHTML(p, i+1, i===currentDeliveryIdx && routeStarted)).join('');
+}
+
+function updateNextDeliveryCard() {
+  const pending = getPendingOrdered();
+  const card = document.getElementById('next-delivery-card');
+  if(!routeStarted || pending.length === 0) { card.style.display='none'; return; }
+  const p = pending[currentDeliveryIdx] || pending[0];
+  if(!p) { card.style.display='none'; return; }
+  card.style.display='block';
+  document.getElementById('nd-name').textContent = p.name;
+  document.getElementById('nd-phone').textContent = p.phone || '';
+  document.getElementById('nd-addr').textContent = p.address || '';
+}
+
+// ============================================================
+// ROUTE
+// ============================================================
+function getPendingOrdered() {
+  let pending = parcels.filter(p => !p.delivered);
+  // Sort: locked with location first, then by routeOrder
+  pending.sort((a,b) => {
+    if(a.routeOrder !== undefined && b.routeOrder !== undefined) return a.routeOrder - b.routeOrder;
+    if(a.lat && !b.lat) return -1;
+    if(!a.lat && b.lat) return 1;
+    return 0;
+  });
+  return pending;
+}
+
+function startRoute() {
+  const pending = getPendingOrdered();
+  if(pending.length === 0) { showToast('Koi pending parcel nahi hai!','error'); return; }
+  // Optimize route by nearest neighbor from current location
+  optimizeRoute(pending);
+  routeStarted = true;
+  currentDeliveryIdx = 0;
+  renderHome();
+  showToast('Route shuru ho gaya! 🚀','success');
+}
+
+function optimizeRoute(pending) {
+  const withLoc = pending.filter(p => p.lat && p.lng);
+  const withoutLoc = pending.filter(p => !p.lat || !p.lng);
+
+  if(withLoc.length <= 1) {
+    pending.forEach((p,i) => { p.routeOrder = i; });
+    saveData();
+    return;
+  }
+
+  // Nearest Neighbor TSP
+  let unvisited = [...withLoc];
+  let ordered = [];
+  // Start from first (or use device location if available)
+  let current = unvisited.shift();
+  ordered.push(current);
+
+  while(unvisited.length > 0) {
+    let nearest = null, minDist = Infinity;
+    for(const p of unvisited) {
+      const d = dist(current.lat, current.lng, p.lat, p.lng);
+      if(d < minDist) { minDist = d; nearest = p; }
+    }
+    unvisited = unvisited.filter(p => p !== nearest);
+    ordered.push(nearest);
+    current = nearest;
+  }
+
+  const finalOrder = [...ordered, ...withoutLoc];
+  finalOrder.forEach((p,i) => { p.routeOrder = i; });
+  saveData();
+}
+
+function dist(lat1, lng1, lat2, lng2) {
+  const R = 6371;
+  const dLat = (lat2-lat1)*Math.PI/180;
+  const dLng = (lng2-lng1)*Math.PI/180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+function navigateCurrent() {
+  const pending = getPendingOrdered();
+  const p = pending[currentDeliveryIdx] || pending[0];
+  if(!p) return;
+  if(p.lat && p.lng) {
+    window.open(`https://maps.google.com/?daddr=${p.lat},${p.lng}&directionsmode=driving`, '_blank');
+  } else if(p.address) {
+    window.open(`https://maps.google.com/?daddr=${encodeURIComponent(p.address)}&directionsmode=driving`, '_blank');
+  }
+}
+
+function callCurrent() {
+  const pending = getPendingOrdered();
+  const p = pending[currentDeliveryIdx] || pending[0];
+  if(p && p.phone) window.open('tel:'+p.phone);
+}
+
+function markCurrentDelivered() {
+  const pending = getPendingOrdered();
+  const p = pending[currentDeliveryIdx] || pending[0];
+  if(!p) return;
+  const idx = parcels.findIndex(x => x.id === p.id);
+  if(idx !== -1) {
+    parcels[idx].delivered = true;
+    parcels[idx].deliveredAt = new Date().toISOString();
+    saveData();
+    showToast('✅ Delivered: ' + p.name,'success');
+    const newPending = getPendingOrdered();
+    if(newPending.length === 0) {
+      routeStarted = false;
+      showToast('🎉 Sab parcels deliver ho gaye!','success');
+    }
+    renderHome();
+  }
+}
+
+// ============================================================
+// PARCELS LIST
+// ============================================================
+function setFilter(btn, filter) {
+  currentFilter = filter;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderParcels();
+}
+
+function renderParcels() {
+  const search = (document.getElementById('search-input')?.value || '').toLowerCase();
+  let list = [...parcels];
+
+  if(currentFilter === 'pending') list = list.filter(p => !p.delivered);
+  else if(currentFilter === 'locked') list = list.filter(p => p.locationLocked);
+  else if(currentFilter === 'done') list = list.filter(p => p.delivered);
+
+  if(search) {
+    list = list.filter(p =>
+      p.name.toLowerCase().includes(search) ||
+      (p.phone||'').includes(search) ||
+      (p.address||'').toLowerCase().includes(search) ||
+      (p.barcode||'').toLowerCase().includes(search)
+    );
+  }
+
+  const el = document.getElementById('parcels-list');
+  if(list.length === 0) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-text">Koi parcel nahi mila</div></div>';
+    return;
+  }
+  el.innerHTML = list.map((p,i) => parcelCardHTML(p, i+1, false, true)).join('');
+}
+
+function parcelCardHTML(p, num, isNext=false, showFull=false) {
+  const badges = [];
+  if(p.locationLocked) badges.push('<span class="badge badge-lock">🔒 Locked</span>');
+  if(p.barcode) badges.push('<span class="badge badge-scan">📷 Scan</span>');
+  if(p.delivered) badges.push('<span class="badge badge-done">✓ Done</span>');
+  else badges.push('<span class="badge badge-pending">Pending</span>');
+
+  const numClass = p.delivered ? 'delivered-num' : p.locationLocked ? 'locked' : '';
+  const cardClass = p.delivered ? 'delivered' : isNext ? 'next-delivery' : '';
+
+  const actions = showFull ? `
+    <div class="parcel-actions">
+      ${p.phone ? `<button class="action-chip chip-call" onclick="callParcel('${p.id}')">📞 Call</button>` : ''}
+      ${p.lat ? `<button class="action-chip chip-nav" onclick="navigateParcel('${p.id}')">🗺 Navigate</button>` : ''}
+      <button class="action-chip chip-edit" onclick="editParcel('${p.id}')">✏ Edit</button>
+      ${!p.delivered ? `<button class="action-chip chip-done" onclick="quickDeliver('${p.id}')">✓ Done</button>` : ''}
+      <button class="action-chip chip-del" onclick="deleteParcel('${p.id}')">🗑</button>
+    </div>` : '';
+
+  return `
+  <div class="parcel-card ${cardClass}" id="pc-${p.id}">
+    <div class="parcel-header" onclick="${showFull ? `toggleActions('${p.id}')` : ''}">
+      <div class="parcel-num ${numClass}">${num}</div>
+      <div class="parcel-info">
+        <div class="parcel-name">${p.name}</div>
+        <div class="parcel-sub">${p.phone || ''} ${p.address ? '• '+p.address : ''}</div>
+        ${p.barcode ? `<div style="font-size:11px;color:var(--accent2);margin-top:2px;">📷 ${p.barcode}</div>` : ''}
+      </div>
+      <div class="parcel-badges">${badges.join('')}</div>
+    </div>
+    ${actions}
+  </div>`;
+}
+
+function toggleActions(id) {
+  // Actions always visible in full list view
+}
+
+function callParcel(id) {
+  const p = parcels.find(x => x.id === id);
+  if(p?.phone) window.open('tel:'+p.phone);
+}
+
+function navigateParcel(id) {
+  const p = parcels.find(x => x.id === id);
+  if(!p) return;
+  if(p.lat && p.lng) window.open(`https://maps.google.com/?daddr=${p.lat},${p.lng}&directionsmode=driving`, '_blank');
+  else if(p.address) window.open(`https://maps.google.com/?daddr=${encodeURIComponent(p.address)}&directionsmode=driving`, '_blank');
+}
+
+function quickDeliver(id) {
+  const idx = parcels.findIndex(x => x.id === id);
+  if(idx !== -1) {
+    parcels[idx].delivered = true;
+    parcels[idx].deliveredAt = new Date().toISOString();
+    saveData();
+    renderParcels();
+    showToast('✅ Marked as delivered!','success');
+  }
+}
+
+function deleteParcel(id) {
+  if(!confirm('Is parcel ko delete karein?')) return;
+  parcels = parcels.filter(p => p.id !== id);
+  saveData();
+  renderParcels();
+  showToast('Parcel deleted','error');
+}
+
+function editParcel(id) {
+  const p = parcels.find(x => x.id === id);
+  if(!p) return;
+  openAddModal(p);
+}
+
+// ============================================================
+// ADD / EDIT MODAL
+// ============================================================
+function openAddModal(existing=null) {
+  document.getElementById('add-modal').classList.add('active');
+  document.getElementById('modal-title').textContent = existing ? 'Edit Parcel' : 'Add New Parcel';
+  document.getElementById('edit-id').value = existing ? existing.id : '';
+  document.getElementById('f-name').value = existing?.name || '';
+  document.getElementById('f-phone').value = existing?.phone || '';
+  document.getElementById('f-barcode').value = existing?.barcode || '';
+  document.getElementById('f-address').value = existing?.address || '';
+  document.getElementById('f-notes').value = existing?.notes || '';
+
+  const lockToggle = document.getElementById('lock-toggle');
+  lockToggle.className = 'toggle' + (existing?.locationLocked ? ' on' : '');
+
+  selectedLat = existing?.lat || null;
+  selectedLng = existing?.lng || null;
+
+  updateLocDisplay();
+  if(selectedLat && selectedLng) setTimeout(() => initMiniMap(), 100);
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('active');
+  if(id === 'add-modal') { selectedLat=null; selectedLng=null; }
+}
+
+function updateLocDisplay() {
+  const el = document.getElementById('loc-display');
+  if(selectedLat && selectedLng) {
+    el.textContent = `${selectedLat.toFixed(5)}, ${selectedLng.toFixed(5)}`;
+    el.style.color = 'var(--green)';
+    document.getElementById('mini-map-wrap').style.display = 'block';
+  } else {
+    el.textContent = 'Not set — tap "Pick on Map"';
+    el.style.color = 'var(--text2)';
+    document.getElementById('mini-map-wrap').style.display = 'none';
+  }
+}
+
+function initMiniMap() {
+  if(!selectedLat || !selectedLng) return;
+  if(!miniMap) {
+    miniMap = L.map('mini-map', {zoomControl:false, attributionControl:false, dragging:false, scrollWheelZoom:false});
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(miniMap);
+  }
+  miniMap.setView([selectedLat, selectedLng], 15);
+  if(miniMarker) miniMap.removeLayer(miniMarker);
+  miniMarker = L.marker([selectedLat, selectedLng]).addTo(miniMap);
+  setTimeout(() => miniMap.invalidateSize(), 100);
+}
+
+function saveParcel() {
+  const name = document.getElementById('f-name').value.trim();
+  const phone = document.getElementById('f-phone').value.trim();
+  if(!name) { showToast('Name required!','error'); return; }
+
+  const id = document.getElementById('edit-id').value;
+  const locked = document.getElementById('lock-toggle').classList.contains('on');
+
+  const data = {
+    name, phone,
+    barcode: document.getElementById('f-barcode').value.trim(),
+    address: document.getElementById('f-address').value.trim(),
+    notes: document.getElementById('f-notes').value.trim(),
+    locationLocked: locked,
+    lat: selectedLat,
+    lng: selectedLng,
+  };
+
+  if(id) {
+    const idx = parcels.findIndex(p => p.id === id);
+    if(idx !== -1) {
+      parcels[idx] = { ...parcels[idx], ...data, updatedAt: new Date().toISOString() };
+    }
+  } else {
+    parcels.push({ ...data, id: generateId(), delivered:false, createdAt: new Date().toISOString() });
+  }
+
+  saveData();
+  closeModal('add-modal');
+  renderParcels();
+  renderHome();
+  showToast(id ? '✅ Parcel updated!' : '✅ Parcel added!','success');
+}
+
+// ============================================================
+// LOCATION PICKER
+// ============================================================
+function openLocationPicker() {
+  document.getElementById('location-modal').classList.add('active');
+  setTimeout(() => {
+    if(!pickerMap) {
+      pickerMap = L.map('location-picker-map', {zoomControl:true, attributionControl:false});
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(pickerMap);
+      pickerMap.setView(
+        selectedLat ? [selectedLat, selectedLng] : [28.6139, 77.2090],
+        selectedLat ? 16 : 11
+      );
+      pickerMap.on('move', onPickerMove);
+      pickerMap.on('moveend', onPickerMoveEnd);
+    } else {
+      pickerMap.invalidateSize();
+      if(selectedLat) pickerMap.setView([selectedLat, selectedLng], 16);
+    }
+    onPickerMoveEnd();
+  }, 100);
+}
+
+function onPickerMove() {
+  const c = pickerMap.getCenter();
+  document.getElementById('picker-coords').textContent = `${c.lat.toFixed(6)}, ${c.lng.toFixed(6)}`;
+}
+
+async function onPickerMoveEnd() {
+  const c = pickerMap.getCenter();
+  document.getElementById('picker-coords').textContent = `${c.lat.toFixed(6)}, ${c.lng.toFixed(6)}`;
+  document.getElementById('picker-address').textContent = 'Getting address...';
+  try {
+    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${c.lat}&lon=${c.lng}&format=json`);
+    const data = await res.json();
+    const addr = data.display_name || `${c.lat.toFixed(5)}, ${c.lng.toFixed(5)}`;
+    document.getElementById('picker-address').textContent = addr;
+  } catch {
+    document.getElementById('picker-address').textContent = `${c.lat.toFixed(5)}, ${c.lng.toFixed(5)}`;
+  }
+}
+
+function confirmLocation() {
+  const c = pickerMap.getCenter();
+  selectedLat = c.lat;
+  selectedLng = c.lng;
+  const addr = document.getElementById('picker-address').textContent;
+  if(addr && addr !== 'Getting address...' && addr !== 'Move map to select location') {
+    const current = document.getElementById('f-address').value.trim();
+    if(!current) document.getElementById('f-address').value = addr;
+  }
+  closeLocationPicker();
+  updateLocDisplay();
+  setTimeout(() => initMiniMap(), 100);
+}
+
+function closeLocationPicker() {
+  document.getElementById('location-modal').classList.remove('active');
+}
+
+function goToMyLocation() {
+  if(!navigator.geolocation) { showToast('GPS not available','error'); return; }
+  navigator.geolocation.getCurrentPosition(pos => {
+    pickerMap.setView([pos.coords.latitude, pos.coords.longitude], 17);
+    showToast('📍 Location found!','success');
+  }, () => showToast('Location access denied','error'));
+}
+
+// ============================================================
+// SCANNER
+// ============================================================
+async function startScanner() {
+  if(scanActive) return;
+  scanActive = true;
+  document.getElementById('scan-result').style.display='none';
+  try {
+    scannerStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode:{ideal:'environment'}, width:{ideal:1280}, height:{ideal:720} }
+    });
+    const video = document.getElementById('scanner-video');
+    video.srcObject = scannerStream;
+    video.play();
+    video.addEventListener('loadeddata', () => scanLoop(video, 'scanner-video'));
+  } catch(e) {
+    showToast('Camera permission denied','error');
+    scanActive = false;
+  }
+}
+
+function scanLoop(video, videoId) {
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+
+  function tick() {
+    if(video.readyState === video.HAVE_ENOUGH_DATA) {
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      ctx.drawImage(video, 0, 0);
+      try {
+        const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const code = jsQR(img.data, img.width, img.height, {inversionAttempts:'dontInvert'});
+        if(code) {
+          onCodeScanned(code.data);
+          return;
+        }
+      } catch(e) {}
+    }
+    if(videoId === 'scanner-video' && scanActive) {
+      scannerAnimFrame = requestAnimationFrame(tick);
+    } else if(videoId === 'form-scanner-video' && formScannerStream) {
+      formScannerAnimFrame = requestAnimationFrame(tick);
+    }
+  }
+  tick();
+}
+
+function onCodeScanned(code) {
+  stopScanner();
+  document.getElementById('scan-code').textContent = code;
+  document.getElementById('scan-result').style.display='block';
+
+  // Find matching parcel
+  const match = parcels.find(p => p.barcode === code);
+  const matchEl = document.getElementById('scan-matched');
+  if(match) {
+    matchEl.innerHTML = `
+      <div class="card" style="border-color:var(--green);">
+        <div style="color:var(--green);font-weight:700;margin-bottom:8px;">✅ Parcel Found!</div>
+        ${parcelCardHTML(match, 1, false, true)}
+      </div>`;
+    showToast('📦 Parcel found: ' + match.name,'success');
+  } else {
+    matchEl.innerHTML = `<div style="color:var(--text2);font-size:14px;padding:8px 0;">No matching parcel found for this code.</div>`;
+  }
+
+  // Store for "add as new"
+  window._lastScannedCode = code;
+}
+
+function stopScanner() {
+  scanActive = false;
+  if(scannerStream) { scannerStream.getTracks().forEach(t => t.stop()); scannerStream=null; }
+  if(scannerAnimFrame) { cancelAnimationFrame(scannerAnimFrame); scannerAnimFrame=null; }
+}
+
+function openScanner() {
+  switchScreen('scan', document.querySelectorAll('.nav-btn')[2]);
+  startScanner();
+}
+
+function addScannedAsNew() {
+  openAddModal();
+  document.getElementById('f-barcode').value = window._lastScannedCode || '';
+}
+
+// Form scanner
+async function scanForForm() {
+  document.getElementById('form-scanner-modal').classList.add('active');
+  try {
+    formScannerStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode:{ideal:'environment'} }
+    });
+    const video = document.getElementById('form-scanner-video');
+    video.srcObject = formScannerStream;
+    video.play();
+    video.addEventListener('loadeddata', () => {
+      formScannerAnimFrame = requestAnimationFrame(() => formScanLoop(video));
+    });
+  } catch(e) { showToast('Camera permission denied','error'); }
+}
+
+function formScanLoop(video) {
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  function tick() {
+    if(video.readyState === video.HAVE_ENOUGH_DATA) {
+      canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+      ctx.drawImage(video, 0, 0);
+      try {
+        const img = ctx.getImageData(0,0,canvas.width,canvas.height);
+        const code = jsQR(img.data, img.width, img.height, {inversionAttempts:'dontInvert'});
+        if(code) {
+          document.getElementById('f-barcode').value = code.data;
+          closeFormScanner();
+          showToast('✅ Barcode scanned!','success');
+          return;
+        }
+      } catch(e){}
+    }
+    if(formScannerStream) formScannerAnimFrame = requestAnimationFrame(tick);
+  }
+  tick();
+}
+
+function closeFormScanner() {
+  document.getElementById('form-scanner-modal').classList.remove('active');
+  if(formScannerStream) { formScannerStream.getTracks().forEach(t=>t.stop()); formScannerStream=null; }
+  if(formScannerAnimFrame) { cancelAnimationFrame(formScannerAnimFrame); formScannerAnimFrame=null; }
+}
+
+function manualSearch() {
+  const code = document.getElementById('manual-code').value.trim();
+  if(!code) return;
+  onCodeScanned(code);
+}
+
+// ============================================================
+// IMPORT / EXPORT
+// ============================================================
+function exportData(format) {
+  if(format === 'json') {
+    const blob = new Blob([JSON.stringify({
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      parcels: parcels
+    }, null, 2)], {type:'application/json'});
+    downloadBlob(blob, `deliverpro_backup_${dateStr()}.json`);
+    showToast('💾 Backup exported!','success');
+  } else if(format === 'csv') {
+    const headers = ['ID','Name','Phone','Barcode','Address','Notes','Latitude','Longitude','LocationLocked','Delivered','DeliveredAt','CreatedAt'];
+    const rows = parcels.map(p => [
+      p.id, p.name, p.phone||'', p.barcode||'', (p.address||'').replace(/,/g,'|'),
+      (p.notes||'').replace(/,/g,'|'), p.lat||'', p.lng||'',
+      p.locationLocked?'Yes':'No', p.delivered?'Yes':'No',
+      p.deliveredAt||'', p.createdAt||''
+    ]);
+    const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
+    const blob = new Blob([csv], {type:'text/csv'});
+    downloadBlob(blob, `deliverpro_${dateStr()}.csv`);
+    showToast('📊 CSV exported!','success');
+  }
+}
+
+function downloadBlob(blob, filename) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+}
+
+function dateStr() {
+  return new Date().toISOString().slice(0,10);
+}
+
+function importData() {
+  document.getElementById('import-file').click();
+}
+
+function handleImport(e) {
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      const imported = data.parcels || data;
+      if(!Array.isArray(imported)) throw new Error('Invalid format');
+
+      const existing = new Set(parcels.map(p => p.id));
+      let added = 0;
+      imported.forEach(p => {
+        if(!existing.has(p.id)) { parcels.push(p); added++; }
+      });
+
+      saveData();
+      renderHome();
+      renderParcels();
+      updateIOScreen();
+      showToast(`✅ ${added} parcels imported!`,'success');
+    } catch(err) {
+      showToast('❌ Invalid backup file','error');
+    }
+    e.target.value = '';
+  };
+  reader.readAsText(file);
+}
+
+function clearAllData() {
+  if(!confirm('Sab data delete hoga — aap sure hain?')) return;
+  if(!confirm('Ek baar aur confirm karein: SARI DATA DELETE hogi!')) return;
+  parcels = [];
+  saveData();
+  routeStarted = false;
+  renderHome();
+  renderParcels();
+  updateIOScreen();
+  showToast('Data cleared','error');
+}
+
+function updateIOScreen() {
+  document.getElementById('app-url').textContent = window.location.href;
+  const size = new Blob([localStorage.getItem('deliverpro_parcels')||'']).size;
+  document.getElementById('storage-info').innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <span style="color:var(--text2);font-size:13px;">Parcels stored</span>
+      <span style="font-weight:700;">${parcels.length}</span>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;">
+      <span style="color:var(--text2);font-size:13px;">Storage used</span>
+      <span style="font-weight:700;">${(size/1024).toFixed(1)} KB</span>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;">
+      <span style="color:var(--text2);font-size:13px;">Locked locations</span>
+      <span style="font-weight:700;color:var(--purple)">${parcels.filter(p=>p.locationLocked).length}</span>
+    </div>`;
+}
+
+function shareApp() {
+  const url = window.location.href;
+  if(navigator.share) {
+    navigator.share({ title:'DeliverPro App', url });
+  } else {
+    navigator.clipboard?.writeText(url);
+    showToast('Link copied to clipboard!','success');
+  }
+}
+
+// ============================================================
+// TOAST
+// ============================================================
+function showToast(msg, type='') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  setTimeout(() => t.className='toast', 2800);
+}
+
+// ============================================================
+// FILTER BUTTON STYLE
+// ============================================================
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.filter-btn').forEach(b => {
+      b.style.background = 'var(--surface2)';
+      b.style.color = 'var(--text)';
+    });
+    this.style.background = 'var(--accent)';
+    this.style.color = '#fff';
+  });
+});
+
+// ============================================================
+// INIT
+// ============================================================
+loadData();
+updateStats();
+setTimeout(() => {
+  renderHome();
+}, 200);
+
+// Close modals on overlay click
+document.getElementById('add-modal').addEventListener('click', function(e){
+  if(e.target === this) closeModal('add-modal');
+});
+document.getElementById('form-scanner-modal').addEventListener('click', function(e){
+  if(e.target === this) closeFormScanner();
+});
+
+// Stop scanner when leaving scan tab
+document.querySelectorAll('.nav-btn').forEach((btn, i) => {
+  btn.addEventListener('click', () => {
+    if(i !== 2) stopScanner();
+  });
+});
+</script>
+</body>
+</html>
