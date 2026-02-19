@@ -496,8 +496,8 @@ textarea.fi{resize:none;height:60px}
   <div style="background:var(--s);border:1px solid var(--br);border-radius:14px;padding:14px;margin-bottom:12px">
     <button class="biobtn" onclick="exportJSON()"><div class="bioic" style="background:rgba(59,130,246,0.15)">💾</div><div><div style="font-weight:600">JSON Backup Export</div><div style="font-size:12px;color:var(--tx2)">Sab data + photos</div></div></button>
     <button class="biobtn" onclick="exportCSV()"><div class="bioic" style="background:rgba(16,185,129,0.15)">📊</div><div><div style="font-weight:600">CSV Export (Excel)</div><div style="font-size:12px;color:var(--tx2)">Report ke liye</div></div></button>
-    <button class="biobtn" onclick="document.getElementById('imp-f').click()"><div class="bioic" style="background:rgba(245,158,11,0.15)">📂</div><div><div style="font-weight:600">Import / Restore</div><div style="font-size:12px;color:var(--tx2)">Backup se wapas laao</div></div></button>
-    <input type="file" id="imp-f" accept=".json" style="display:none" onchange="doImport(event)">
+    <button class="biobtn" onclick="document.getElementById('imp-f').click()"><div class="bioic" style="background:rgba(245,158,11,0.15)">📂</div><div><div style="font-weight:600">Import / Restore</div><div style="font-size:12px;color:var(--tx2)">JSON backup file select karo</div></div></button>
+    <input type="file" id="imp-f" accept=".json,.txt,application/json,text/*" style="display:none" onchange="doImport(event)">
     <button class="biobtn" onclick="waBackup()"><div class="bioic" style="background:rgba(37,211,102,0.15)">💬</div><div><div style="font-weight:600">WhatsApp Backup</div><div style="font-size:12px;color:var(--tx2)">Apne aap ko bhejo</div></div></button>
   </div>
 
@@ -672,8 +672,52 @@ let scanMode = 'bc';
 // ════════════════════════════════════════════
 // DATA
 // ════════════════════════════════════════════
+function save() {
+  try {
+    localStorage.setItem('dp8', JSON.stringify(P));
+    localStorage.setItem('dp8_today', JSON.stringify([...todayIds]));
+  } catch(e) {
+    // Storage full! Photos hata ke try karo
+    if(e.name === 'QuotaExceededError' || e.code === 22) {
+      try {
+        // Photos ke bina save karo
+        const slim = P.map(p => ({...p, photos:[]}));
+        localStorage.setItem('dp8', JSON.stringify(slim));
+        localStorage.setItem('dp8_today', JSON.stringify([...todayIds]));
+        showT('⚠️ Storage full! Photos Drive mein safe hain', 'err');
+        // Auto sync to Drive if logged in
+        if(gTok) setTimeout(syncDrive, 1000);
+      } catch(e2) {
+        showT('❌ Storage bilkul full! Drive sync karo', 'err');
+        if(gTok) setTimeout(syncDrive, 500);
+      }
+    }
+  }
+  updStats();
+}
+
 function load() {
   try { P = JSON.parse(localStorage.getItem('dp8') || '[]'); } catch { P = []; }
+
+  // Purane versions se migrate karo
+  if(P.length === 0) {
+    const oldKeys = ['dp7', 'dp6', 'parcels', 'deliveryParcels'];
+    for(const key of oldKeys) {
+      try {
+        const old = localStorage.getItem(key);
+        if(old) {
+          const parsed = JSON.parse(old);
+          const arr = Array.isArray(parsed) ? parsed : (parsed.parcels || []);
+          if(arr.length > 0) {
+            P = arr;
+            try { localStorage.setItem('dp8', JSON.stringify(P)); } catch {}
+            break;
+          }
+        }
+      } catch {}
+    }
+  }
+
   gTok = localStorage.getItem('dp8_tok') || null;
   driveId = localStorage.getItem('dp8_did') || null;
   try { gUser = JSON.parse(localStorage.getItem('dp8_user') || 'null'); } catch { gUser = null; }
@@ -1314,26 +1358,33 @@ function onScan(code){
   document.getElementById('scan-res').style.display='block';
   const match=P.find(p=>p.barcode===code);
   if(match){
+    // ✅ AUTOMATICALLY aaj ke route mein add karo!
+    todayIds.add(match.id);
+    save();
+    // Today bar update karo
+    document.getElementById('today-bar').style.display='block';
+    document.getElementById('today-title').textContent=todayIds.size+' parcels aaj ke liye';
+    document.getElementById('s3').textContent=[...todayIds].filter(id=>!P.find(p=>p.id===id)?.delivered).length;
+
     document.getElementById('scan-match').innerHTML=`<div style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:11px;padding:12px">
-      <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;background:linear-gradient(135deg,#34D399,#60A5FA);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:6px">✅ ${match.name}</div>
-      <div style="font-size:12px;color:var(--tx2)">${match.phone||''} ${match.address?'• '+match.address:''}</div>
-      ${match.timeNote?`<div style="font-size:12px;color:var(--yellow);margin-top:4px">⏰ ${match.timeNote}</div>`:''}
+      <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;background:linear-gradient(135deg,#34D399,#60A5FA);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:4px">✅ ${match.name}</div>
+      <div style="font-size:12px;color:var(--tx2);margin-bottom:6px">${match.phone||''} ${match.address?'• '+match.address:''}</div>
+      ${match.timeNote?`<div style="font-size:12px;color:var(--yellow);margin-bottom:8px">⏰ ${match.timeNote}</div>`:''}
+      <div style="background:rgba(16,185,129,0.15);border-radius:8px;padding:8px 10px;font-size:13px;font-weight:600;color:#34D399">✅ Aaj ke route mein add ho gaya! (${todayIds.size} total)</div>
       <div style="display:flex;gap:7px;margin-top:10px">
-        <button class="chip c-done" onclick="toggleToday('${match.id}');this.textContent='✅ Added!'">☑ Aaj ke Route mein Add</button>
-        ${match.lat?`<button class="chip c-nav" onclick="doNav(P.find(x=>x.id==='${match.id}'))">🗺️ Go</button>`:''}
+        ${match.lat?`<button class="chip c-nav" onclick="doNav(P.find(x=>x.id==='${match.id}'))">🗺️ Navigate</button>`:''}
+        ${match.phone?`<button class="chip c-call" onclick="window.open('tel:${match.phone}')">📞 Call</button>`:''}
+        <button class="chip c-edit" onclick="openEdit('${match.id}')">✏ Edit</button>
       </div>
     </div>`;
-    showT('📦 Found: '+match.name,'ok');
+    showT(`✅ ${match.name} — Aaj ke route mein!`,'ok');
     setFP(match.id);
-    // Auto add to today
-    if(!todayIds.has(match.id)){
-      todayIds.add(match.id);save();
-      document.getElementById('today-title').textContent=todayIds.size+' parcels aaj ke liye';
-      document.getElementById('today-bar').style.display='block';
-      showT(`✅ ${match.name} — Aaj ke route mein add hua!`,'ok');
-    }
   } else {
-    document.getElementById('scan-match').innerHTML=`<div style="color:var(--tx2);font-size:14px;padding:8px 0">Koi match nahi mila. Naya parcel add karo!</div>`;
+    document.getElementById('scan-match').innerHTML=`<div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:11px;padding:12px">
+      <div style="font-size:14px;font-weight:600;color:var(--orange);margin-bottom:6px">⚠️ Koi parcel nahi mila</div>
+      <div style="font-size:13px;color:var(--tx2)">Naya parcel add karo is barcode ke saath!</div>
+    </div>`;
+    showT('Barcode match nahi mila — Add karo!','err');
   }
   window._lc=code;
 }
@@ -1391,16 +1442,104 @@ function showOCRRes(results){
 // ════════════════════════════════════════════
 // EXPORT / IMPORT
 // ════════════════════════════════════════════
-function exportJSON(){dl(new Blob([JSON.stringify({version:8,exportedAt:new Date().toISOString(),parcels:P},null,2)],{type:'application/json'}),`dp_backup_${ds()}.json`);showT('💾 Exported!','ok');}
-function exportCSV(){
-  const h=['Name','Phone','Barcode','Address','TimeNote','Lat','Lng','Photos','Delivered'];
-  const rows=P.map(p=>[p.name,p.phone||'',p.barcode||'',(p.address||'').replace(/,/g,'|'),p.timeNote||'',p.lat||'',p.lng||'',(p.photos||[]).length,p.delivered?'Yes':'No']);
-  dl(new Blob([[h,...rows].map(r=>r.join(',')).join('\n')],{type:'text/csv'}),`dp_${ds()}.csv`);showT('📊 CSV!','ok');
+function exportJSON(){
+  try {
+    const json = JSON.stringify({version:8,exportedAt:new Date().toISOString(),parcels:P}, null, 2);
+    const blob = new Blob([json], {type:'application/json'});
+    const nm = `dp_backup_${ds()}.json`;
+    // Mobile friendly download
+    if(navigator.share && navigator.canShare) {
+      const file = new File([blob], nm, {type:'application/json'});
+      if(navigator.canShare({files:[file]})) {
+        navigator.share({files:[file], title:'DeliverPro Backup'});
+        showT('📤 Share karo backup file!','ok'); return;
+      }
+    }
+    dl(blob, nm);
+    showT('💾 Backup download ho raha hai!','ok');
+  } catch(e){ showT('❌ Error: '+e.message,'err'); }
 }
-function doImport(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{const d=JSON.parse(ev.target.result);const imp=d.parcels||d;if(!Array.isArray(imp))throw 0;const ex=new Set(P.map(p=>p.id));let n=0;imp.forEach(p=>{if(!ex.has(p.id)){P.push(p);n++;}});save();renderHome();renderParcels();showT(`✅ ${n} parcels import hue!`,'ok');}catch{showT('❌ Invalid file','err');}e.target.value='';};r.readAsText(f);}
-function waBackup(){exportJSON();setTimeout(()=>{const msg=encodeURIComponent(`DeliverPro Backup 📦\n${new Date().toLocaleDateString('hi-IN')}\n\nYe file save karo! Import ke liye Backup tab mein jao.`);window.open(`https://wa.me/?text=${msg}`,'_blank');showT('File + WhatsApp open!','ok');},800);}
+
+function exportCSV(){
+  try {
+    const h=['Name','Phone','Barcode','Address','TimeNote','Lat','Lng','Photos','Delivered'];
+    const rows=P.map(p=>[p.name,p.phone||'',p.barcode||'',(p.address||'').replace(/,/g,'|'),p.timeNote||'',p.lat||'',p.lng||'',(p.photos||[]).length,p.delivered?'Yes':'No']);
+    const csv = [h,...rows].map(r=>r.join(',')).join('\n');
+    const blob = new Blob([csv],{type:'text/csv'});
+    if(navigator.share && navigator.canShare) {
+      const file = new File([blob], `dp_${ds()}.csv`, {type:'text/csv'});
+      if(navigator.canShare({files:[file]})) {
+        navigator.share({files:[file], title:'DeliverPro CSV'});
+        showT('📤 CSV share karo!','ok'); return;
+      }
+    }
+    dl(blob, `dp_${ds()}.csv`);
+    showT('📊 CSV download ho raha hai!','ok');
+  } catch(e){ showT('❌ Error: '+e.message,'err'); }
+}
+
+function waBackup(){
+  try {
+    const json = JSON.stringify({version:8,exportedAt:new Date().toISOString(),parcels:P}, null, 2);
+    const blob = new Blob([json], {type:'application/json'});
+    const nm = `dp_backup_${ds()}.json`;
+    if(navigator.share && navigator.canShare) {
+      const file = new File([blob], nm, {type:'application/json'});
+      if(navigator.canShare({files:[file]})) {
+        navigator.share({files:[file], title:'DeliverPro Backup — WhatsApp pe bhejo!'});
+        showT('💬 WhatsApp pe share karo!','ok'); return;
+      }
+    }
+    // Fallback
+    dl(blob, nm);
+    setTimeout(()=>{
+      const msg = encodeURIComponent('DeliverPro Backup 📦\n'+new Date().toLocaleDateString('hi-IN')+'\n\nFile download hui — apne aap ko WhatsApp pe bhejo!');
+      window.open('https://wa.me/?text='+msg,'_blank');
+    },800);
+    showT('File download + WhatsApp open!','ok');
+  } catch(e){ showT('❌ Error: '+e.message,'err'); }
+}
+
+function doImport(e) {
+  const f = e.target.files[0]; if(!f) return;
+  showT('📂 File padh raha hai...', '');
+  const r = new FileReader();
+  r.onload = ev => {
+    try {
+      let d;
+      try { d = JSON.parse(ev.target.result); }
+      catch { showT('❌ File corrupt hai', 'err'); return; }
+      let imp = [];
+      if(Array.isArray(d)) imp = d;
+      else if(d.parcels && Array.isArray(d.parcels)) imp = d.parcels;
+      else if(d.data && Array.isArray(d.data)) imp = d.data;
+      if(imp.length === 0) { showT('❌ Koi parcel nahi mila', 'err'); return; }
+      const ex = new Set(P.map(p => p.id));
+      let n = 0;
+      imp.forEach(p => {
+        if(!p.id) p.id = uid();
+        if(!p.photos) p.photos = [];
+        if(!ex.has(p.id)) { P.push(p); n++; ex.add(p.id); }
+      });
+      save(); renderHome(); renderParcels();
+      showT(`✅ ${n} parcels restore hue! Total: ${P.length}`, 'ok');
+    } catch(err) { showT('❌ Error: ' + err.message, 'err'); }
+    e.target.value = '';
+  };
+  r.onerror = () => showT('❌ File read nahi hui', 'err');
+  r.readAsText(f, 'UTF-8');
+}
+
 function clearAll(){if(!confirm('Sab data delete?'))return;if(!confirm('SURE?'))return;P=[];todayIds.clear();save();routeOn=false;clearFP();renderHome();renderParcels();showT('Cleared','err');}
-function dl(blob,nm){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=nm;a.click();}
+function dl(blob,nm){
+  try {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = nm;
+    document.body.appendChild(a); a.click();
+    setTimeout(()=>{ document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
+  } catch(e){ showT('❌ Download error: '+e.message,'err'); }
+}
 function ds(){return new Date().toISOString().slice(0,10);}
 function shareApp(){if(navigator.share)navigator.share({title:'DeliverPro',url:window.location.href});else{navigator.clipboard?.writeText(window.location.href);showT('Link copied!','ok');}}
 function updIO(){
@@ -1408,11 +1547,15 @@ function updIO(){
   const sz=new Blob([localStorage.getItem('dp8')||'']).size;
   const totPh=P.reduce((s,p)=>s+(p.photos||[]).length,0);
   const totKB=P.reduce((s,p)=>s+(p.photos||[]).reduce((ss,ph)=>ss+Math.round(ph.data.length*0.75/1024),0),0);
+  const pct = Math.round(sz/50000); // ~5MB limit
+  const warn = sz > 4000000 ? '⚠️ Storage almost full!' : sz > 2000000 ? '🟡 Half full' : '🟢 OK';
   document.getElementById('stinfo').innerHTML=`
     <div style="display:flex;justify-content:space-between;margin-bottom:8px"><span style="color:var(--tx2)">Total Parcels</span><span style="font-weight:700">${P.length}</span></div>
-    <div style="display:flex;justify-content:space-between;margin-bottom:8px"><span style="color:var(--tx2)">Storage Used</span><span style="font-weight:700">${(sz/1024).toFixed(1)} KB</span></div>
+    <div style="display:flex;justify-content:space-between;margin-bottom:8px"><span style="color:var(--tx2)">Storage Used</span><span style="font-weight:700">${(sz/1024).toFixed(0)}KB / 5120KB ${warn}</span></div>
+    <div style="background:var(--s2);border-radius:6px;height:8px;margin-bottom:10px;overflow:hidden"><div style="height:100%;width:${Math.min(pct,100)}%;background:${sz>4000000?'var(--red)':sz>2000000?'var(--orange)':'var(--green)'};border-radius:6px"></div></div>
     <div style="display:flex;justify-content:space-between;margin-bottom:8px"><span style="color:var(--tx2)">Photos</span><span style="font-weight:700;color:var(--teal)">${totPh} photos (~${totKB}KB)</span></div>
-    <div style="display:flex;justify-content:space-between"><span style="color:var(--tx2)">Drive Sync</span><span style="font-weight:700;color:${gTok?'var(--green)':'var(--tx3)'}">${gTok?'✅ Active':'Not connected'}</span></div>`;
+    <div style="display:flex;justify-content:space-between"><span style="color:var(--tx2)">Drive Sync</span><span style="font-weight:700;color:${gTok?'var(--green)':'var(--tx3)'}">${gTok?'✅ Connected':'❌ Login karo'}</span></div>
+    ${sz > 3000000 ? `<div style="margin-top:10px;padding:10px;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:9px;font-size:12px;color:var(--orange)">⚠️ Storage zyada bhar raha hai! Google Drive sync karo — photos wahan safe rahenge!</div>` : ''}`;
 }
 
 // ════════════════════════════════════════════
@@ -1436,12 +1579,20 @@ function showT(msg,type=''){const t=document.getElementById('toast');t.textConte
 // INIT
 // ════════════════════════════════════════════
 load(); updStats();
-setTimeout(()=>{
+setTimeout(async ()=>{
   renderHome();
-  if(gUser)updGBar(true);
-  checkAuth();
+  if(gUser) updGBar(true);
+  await checkAuth();
+  // Agar local data nahi hai lekin Drive connected hai — auto load!
+  if(P.length === 0 && gTok) {
+    showT('☁️ Drive se data load ho raha hai...', '');
+    setTimeout(loadDrive, 1000);
+  }
   // Show today bar if any selected
-  if(todayIds.size>0){document.getElementById('today-bar').style.display='block';document.getElementById('today-title').textContent=todayIds.size+' parcels aaj ke liye';}
+  if(todayIds.size>0){
+    document.getElementById('today-bar').style.display='block';
+    document.getElementById('today-title').textContent=todayIds.size+' parcels aaj ke liye';
+  }
 },200);
 document.getElementById('add-mod').addEventListener('click',function(e){if(e.target===this)closeMod('add-mod');});
 document.getElementById('fscan-mod').addEventListener('click',function(e){if(e.target===this)closeFormScan();});
