@@ -338,15 +338,20 @@ textarea.fi{resize:none;height:60px}
   <!-- MAP — SATELLITE -->
   <div class="stitle" style="margin-top:0">🛰️ Satellite Map</div>
   <div style="background:var(--s);border:1px solid var(--br);border-radius:14px;padding:12px;margin-bottom:12px">
-    <div id="map"></div>
-    <div class="rpbar"><div class="rpfill" id="rp" style="width:0%"></div></div>
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px">
+    <!-- MAP with expand toggle -->
+    <div style="position:relative">
+      <div id="map" style="height:220px;border-radius:10px;overflow:hidden;border:1px solid var(--br)"></div>
+      <!-- Expand button -->
+      <button onclick="toggleMapSize()" id="map-expand-btn" style="position:absolute;top:8px;right:8px;z-index:1000;background:rgba(10,15,30,0.85);border:1px solid rgba(255,255,255,0.2);color:#fff;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;cursor:pointer;backdrop-filter:blur(4px)">⬆ Lamba</button>
+    </div>
+    <div class="rpbar" style="margin-top:8px"><div class="rpfill" id="rp" style="width:0%"></div></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">
       <div>
         <span style="font-size:13px;color:var(--tx2)" id="rtxt">0 pending</span>
         <span style="font-size:12px;color:var(--teal);margin-left:6px" id="km-txt"></span>
       </div>
       <div style="display:flex;gap:6px">
-        <button class="btn btn-gh btn-sm" onclick="openSelectModal()" style="font-size:12px">☑ Select Aaj ke</button>
+        <button class="btn btn-gh btn-sm" onclick="openSelectModal()" style="font-size:12px">☑ Select</button>
         <button class="btn btn-g btn-sm" onclick="startRoute()">▶ Start</button>
       </div>
     </div>
@@ -418,21 +423,14 @@ textarea.fi{resize:none;height:60px}
 
   <!-- BARCODE -->
   <div id="mode-bc">
-    <div class="stitle" style="margin-top:0">Barcode ya QR Code</div>
     <div style="background:var(--s);border:1px solid var(--br);border-radius:14px;padding:14px;margin-bottom:12px">
       <div class="scanbox">
         <video id="scan-vid" playsinline muted autoplay></video>
         <div class="scanov"><div class="scanfr"><div class="scanln"></div></div></div>
+        <div id="scan-badge" style="position:absolute;top:8px;right:8px;background:rgba(16,185,129,0.9);color:#fff;border-radius:20px;padding:4px 12px;font-size:12px;font-weight:700;display:none">✅ <span id="scan-cnt">0</span> scanned</div>
       </div>
-      <p style="text-align:center;color:var(--tx2);font-size:13px;margin-top:10px">Parcel ka barcode ya QR scan karo</p>
-      <div id="scan-res" style="display:none;margin-top:12px">
-        <div style="background:var(--s2);border-radius:9px;padding:11px;border:1px solid var(--br)">
-          <div style="font-size:11px;color:var(--tx2);margin-bottom:3px">Scanned:</div>
-          <div id="scan-code" style="font-weight:700;font-size:16px;letter-spacing:1px;color:var(--blue)"></div>
-        </div>
-        <div id="scan-match" style="margin-top:10px"></div>
-        <button class="btn btn-p" style="margin-top:10px" onclick="addFromScan()">+ Add as New Parcel</button>
-      </div>
+      <div id="scan-msg" style="text-align:center;color:var(--tx2);font-size:13px;margin-top:10px;padding:8px;background:rgba(59,130,246,0.06);border-radius:9px">📷 Camera ready — Parcel ka barcode dikhao!</div>
+      <div id="scan-res" style="margin-top:12px"></div>
     </div>
     <div style="background:var(--s);border:1px solid var(--br);border-radius:14px;padding:14px">
       <div class="fl">Manual Barcode</div>
@@ -944,57 +942,131 @@ function confirmSel() {
 function clearToday() { todayIds.clear(); save(); document.getElementById('today-bar').style.display='none'; routeOn=false; document.getElementById('cur-wrap').style.display='none'; renderMap(); renderHome(); showT('Selection clear',''); }
 
 // ════════════════════════════════════════════
-// SATELLITE MAP
+// SATELLITE MAP — Fixed zoom, numbered markers
 // ════════════════════════════════════════════
+let mapBig = false;
+
+function toggleMapSize() {
+  mapBig = !mapBig;
+  const mapEl = document.getElementById('map');
+  const btn = document.getElementById('map-expand-btn');
+  mapEl.style.height = mapBig ? '420px' : '220px';
+  btn.textContent = mapBig ? '⬇ Chhota' : '⬆ Lamba';
+  setTimeout(()=>{ if(hMap) hMap.invalidateSize(); }, 100);
+}
+
 function initHMap() {
   if(hMap) return;
-  hMap = L.map('map', { zoomControl:true, attributionControl:false });
-  // SATELLITE — hamesha
-  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom:19 }).addTo(hMap);
-  hMap.setView([28.6139,77.2090], 12);
+  hMap = L.map('map', {
+    zoomControl: true,
+    attributionControl: false,
+    maxZoom: 18,
+    minZoom: 4
+  });
+  L.tileLayer(
+    'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+    { maxZoom:18, minZoom:4 }
+  ).addTo(hMap);
+  hMap.setView([20.5937, 78.9629], 5); // India — shuru mein
 }
 
 function renderHome() { initHMap(); renderMap(); renderHomeList(); updCurCard(); }
 
 function renderMap() {
   if(!hMap) return;
-  hMap.eachLayer(l=>{ if(l instanceof L.Marker||l instanceof L.Polyline) hMap.removeLayer(l); });
 
-  // Which parcels to show on map
-  const toShow = todayIds.size>0
-    ? P.filter(p=>todayIds.has(p.id)&&!p.delivered&&p.lat&&p.lng)
-    : P.filter(p=>!p.delivered&&p.lat&&p.lng);
-
-  const tot=P.filter(p=>p.lat&&p.lng).length;
-  const dn=P.filter(p=>p.delivered&&p.lat&&p.lng).length;
-  document.getElementById('rp').style.width=(tot>0?(dn/tot*100):0)+'%';
-  document.getElementById('rtxt').textContent=P.filter(p=>!p.delivered).length+' pending';
-  document.getElementById('km-txt').textContent=routeKm>0?`• ~${routeKm.toFixed(1)}km`:'';
-
-  const pts=[];
-  toShow.forEach((p,i)=>{
-    const urg=p.timeNote&&isUrg(p.timeNote);
-    const isToday=todayIds.has(p.id);
-    const isCur=routeOn&&i===0;
-    const hasPh=p.photos&&p.photos.length>0;
-    const col=urg?'#EF4444':isCur?'#F59E0B':isToday?'#10B981':'#3B82F6';
-    const icon=L.divIcon({
-      html:`<div onclick="setFP('${p.id}')" style="background:${col};color:#fff;border-radius:50%;width:34px;height:34px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;border:3px solid rgba(255,255,255,0.9);box-shadow:0 2px 12px rgba(0,0,0,0.6);cursor:pointer;font-family:Syne,sans-serif">${hasPh?'📸':urg?'⚠':(i+1)}</div>`,
-      className:'',iconSize:[34,34],iconAnchor:[17,17]
-    });
-    L.marker([p.lat,p.lng],{icon}).addTo(hMap).on('click',()=>setFP(p.id));
-    pts.push([p.lat,p.lng]);
+  // Pehle sab markers/lines hata do
+  hMap.eachLayer(l => {
+    if(l instanceof L.Marker || l instanceof L.Polyline) hMap.removeLayer(l);
   });
-  if(pts.length>1) L.polyline(pts,{color:'#00FF88',weight:3,opacity:0.8,dashArray:'8,5'}).addTo(hMap);
-  if(pts.length>0) hMap.fitBounds(L.latLngBounds(pts),{padding:[30,30]});
+
+  // Stats update
+  const tot = P.filter(p=>p.lat&&p.lng).length;
+  const dn  = P.filter(p=>p.delivered&&p.lat&&p.lng).length;
+  document.getElementById('rp').style.width = (tot>0 ? (dn/tot*100) : 0)+'%';
+  document.getElementById('rtxt').textContent = P.filter(p=>!p.delivered).length+' pending';
+  document.getElementById('km-txt').textContent = routeKm>0 ? `• ~${routeKm.toFixed(1)}km` : '';
+
+  // Kaunse parcels dikhane hain
+  const toShow = (todayIds.size>0
+    ? P.filter(p=>todayIds.has(p.id)&&!p.delivered)
+    : P.filter(p=>!p.delivered)
+  ).filter(p=>p.lat&&p.lng);
+
+  if(toShow.length===0) return; // Koi location nahi — map waise hi rahe
+
+  const pts = [];
+
+  toShow.forEach((p, i) => {
+    const isCur   = routeOn && i===0;
+    const urg     = p.timeNote && isUrg(p.timeNote);
+    const isToday = todayIds.has(p.id);
+
+    // Color scheme
+    const col    = isCur ? '#F59E0B' : urg ? '#EF4444' : isToday ? '#10B981' : '#3B82F6';
+    const bCol   = isCur ? '#fff'    : urg ? '#FCA5A5' : isToday ? '#A7F3D0' : '#BFDBFE';
+    const sz     = isCur ? 40 : 32;
+    const fsz    = isCur ? 14 : 11;
+    const lbl    = String(i+1); // HAMESHA NUMBER — 1, 2, 3...
+
+    const icon = L.divIcon({
+      html: `<div style="
+        background:${col};
+        color:#fff;
+        border-radius:50%;
+        width:${sz}px;height:${sz}px;
+        display:flex;align-items:center;justify-content:center;
+        font-weight:900;font-size:${fsz}px;
+        border:3px solid ${bCol};
+        box-shadow:0 2px 12px rgba(0,0,0,0.65);
+        cursor:pointer;
+        font-family:'Syne',sans-serif;
+        ${isCur ? 'box-shadow:0 0 0 4px rgba(245,158,11,0.4),0 2px 12px rgba(0,0,0,0.6);' : ''}
+      ">${lbl}</div>`,
+      className: '',
+      iconSize: [sz, sz],
+      iconAnchor: [sz/2, sz/2]
+    });
+
+    L.marker([p.lat, p.lng], {icon, zIndexOffset: isCur ? 1000 : 0})
+      .addTo(hMap)
+      .on('click', ()=>setFP(p.id));
+
+    pts.push([p.lat, p.lng]);
+  });
+
+  // Route line
+  if(pts.length > 1) {
+    L.polyline(pts, {color:'#00FF88', weight:3, opacity:0.85, dashArray:'10,6'}).addTo(hMap);
+  }
+
+  // SMART ZOOM — kabhi zyada zoom nahi!
+  try {
+    if(pts.length === 1) {
+      // Ek hi point — zoom 14 max, existing zoom se kam nahi
+      const curZ = hMap.getZoom();
+      hMap.setView(pts[0], Math.min(curZ > 0 ? curZ : 14, 14));
+    } else {
+      hMap.fitBounds(L.latLngBounds(pts), {
+        padding: [50, 50],
+        maxZoom: 14   // MAX 14 — kabhi zyada zoom nahi!
+      });
+    }
+  } catch(e) {
+    // Koi error nahi aaye
+    console.warn('Map zoom error:', e);
+  }
+
+  setTimeout(()=>{ if(hMap) hMap.invalidateSize(); }, 150);
 }
 
 function renderHomeList() {
-  const pend=getPend();
-  const el=document.getElementById('home-list');
+  const pend = getPend();
+  const el = document.getElementById('home-list');
   if(pend.length===0){el.innerHTML='<div class="empty"><div>🎉</div><div>Sab deliver ho gaye!</div></div>';return;}
-  el.innerHTML=pend.slice(0,6).map((p,i)=>pCard(p,i+1,routeOn&&i===0,false)).join('');
+  el.innerHTML = pend.slice(0,6).map((p,i)=>pCard(p,i+1,routeOn&&i===0,false)).join('');
 }
+
 
 // ════════════════════════════════════════════
 // ROUTE
@@ -1069,37 +1141,66 @@ function twoOpt(r){
 }
 function dk(a,b,c,d){const R=6371,dL=(c-a)*Math.PI/180,dG=(d-b)*Math.PI/180,x=Math.sin(dL/2)**2+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(dG/2)**2;return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));}
 
-function navCur(){const p=getPend()[curIdx];if(p)doNav(p);}
-function callCur(){const p=getPend()[curIdx];if(p?.phone)window.open('tel:'+p.phone);}
+function navCur(){ const p=getPend()[0]; if(p) doNav(p); }
+function callCur(){ const p=getPend()[0]; if(p?.phone) window.open('tel:'+p.phone); }
 
 async function delCur(){
-  const pend=getPend();const p=pend[curIdx]||pend[0];if(!p)return;
+  const pend=getPend(); const p=pend[0]; if(!p) return;
   const idx=P.findIndex(x=>x.id===p.id);
-  if(idx!==-1){P[idx].delivered=true;P[idx].deliveredAt=new Date().toISOString();save();}
+  if(idx!==-1){ P[idx].delivered=true; P[idx].deliveredAt=new Date().toISOString(); save(); }
   const rem=getPend().length;
   if(rem===0){
     routeOn=false;
     const mins=routeStartTime?Math.round((Date.now()-routeStartTime)/60000):0;
     showT(`🎉 Sab deliver! ~${routeKm.toFixed(1)}km, ${mins} min`,'ok');
     document.getElementById('cur-wrap').style.display='none';
-  } else showT(`✅ ${p.name} done! ${rem} baaki`,'ok');
+  } else {
+    showT(`✅ ${p.name} done! ${rem} baaki — Navigate next!`,'ok');
+    // Auto navigate karo agla parcel!
+    setTimeout(()=>{
+      const next=getPend()[0];
+      if(next&&next.lat) doNav(next);
+    }, 1500);
+  }
   if(gTok) setTimeout(syncDrive,3000);
   renderHome();
 }
 
+function doNav(p){
+  if(p.lat&&p.lng){
+    const lat=p.lat, lng=p.lng;
+    const label=encodeURIComponent(p.name);
+    // Google Maps app seedha khulega (Android APK)
+    const appUrl=`google.navigation:q=${lat},${lng}&mode=d`;
+    const webUrl=`https://maps.google.com/?daddr=${lat},${lng}&directionsmode=driving`;
+    // Pehle app try karo
+    const frame=document.createElement('iframe');
+    frame.style.display='none'; frame.src=appUrl;
+    document.body.appendChild(frame);
+    setTimeout(()=>{ document.body.removeChild(frame); },2000);
+    // 1.5 sec baad agar app nahi khula toh web
+    setTimeout(()=>window.open(webUrl,'_blank'),1500);
+  } else if(p.address){
+    window.open(`https://maps.google.com/?daddr=${encodeURIComponent(p.address)}&directionsmode=driving`,'_blank');
+  } else {
+    showT('Location set nahi — pehle GPS lock karo!','err');
+  }
+}
+
 function updCurCard(){
-  const pend=getPend();const w=document.getElementById('cur-wrap');
-  if(!routeOn||pend.length===0){w.style.display='none';return;}
-  const p=pend[curIdx]||pend[0];if(!p){w.style.display='none';return;}
+  const pend=getPend(); const w=document.getElementById('cur-wrap');
+  if(!routeOn||pend.length===0){ w.style.display='none'; return; }
+  const p=pend[0]; if(!p){ w.style.display='none'; return; }
   w.style.display='block';
   document.getElementById('cur-nm').textContent=p.name;
   document.getElementById('cur-tel').textContent=p.phone||'';
   document.getElementById('cur-ad').textContent=p.address||'';
   const cph=document.getElementById('cur-ph');
-  if(p.photos&&p.photos.length>0)cph.innerHTML=`<img src="${p.photos[0].data}" style="width:100%;height:100%;object-fit:cover;cursor:pointer" onclick="showPhoto('${p.photos[0].data}','${p.name}')">`;
+  if(p.photos&&p.photos.length>0)
+    cph.innerHTML=`<img src="${p.photos[0].data}" style="width:100%;height:100%;object-fit:cover;cursor:pointer" onclick="showPhoto('${p.photos[0].data}','${p.name}')">`;
   else cph.innerHTML='<span style="font-size:24px">📦</span>';
   const ctn=document.getElementById('cur-tn');
-  if(p.timeNote){ctn.style.display='block';ctn.textContent='⏰ '+p.timeNote;ctn.style.color=isUrg(p.timeNote)?'var(--red)':'var(--yellow)';}
+  if(p.timeNote){ ctn.style.display='block'; ctn.textContent='⏰ '+p.timeNote; ctn.style.color=isUrg(p.timeNote)?'var(--red)':'var(--yellow)'; }
   else ctn.style.display='none';
 }
 
@@ -1332,62 +1433,148 @@ function myGPS(){
 }
 
 // ════════════════════════════════════════════
-// SCANNER — ZXING (all barcode types)
+// SCANNER — CONTINUOUS (auto next parcel!)
 // ════════════════════════════════════════════
-let zxR2=null,zxFR2=null;
+let zxR2=null, zxFR2=null;
+let lastScannedId=null, scanCount=0, scanCooldown=false;
+
 async function startScanner(){
-  if(scanOn)return;scanOn=true;
-  document.getElementById('scan-res').style.display='none';
+  if(scanOn) return;
+  scanOn=true; scanCooldown=false;
   try{
-    if(!zxR2)zxR2=new ZXing.BrowserMultiFormatReader();
-    await zxR2.decodeFromConstraints({video:{facingMode:{ideal:'environment'},width:{ideal:1280}}},document.getElementById('scan-vid'),(result,err)=>{if(result)onScan(result.getText());});
-  }catch{showT('Camera permission denied','err');scanOn=false;}
+    if(!zxR2) zxR2=new ZXing.BrowserMultiFormatReader();
+    await zxR2.decodeFromConstraints(
+      {video:{facingMode:{ideal:'environment'},width:{ideal:1280}}},
+      document.getElementById('scan-vid'),
+      (result,err)=>{ if(result && !scanCooldown){ scanCooldown=true; onScan(result.getText()); } }
+    );
+  }catch{ showT('Camera permission denied','err'); scanOn=false; }
 }
-function stopScan(){scanOn=false;if(zxR2){try{zxR2.reset();}catch{}}}
-async function scanForm(){
-  document.getElementById('fscan-mod').classList.add('active');
-  try{if(!zxFR2)zxFR2=new ZXing.BrowserMultiFormatReader();
-    await zxFR2.decodeFromConstraints({video:{facingMode:{ideal:'environment'}}},document.getElementById('fscan-vid'),(result,err)=>{if(result){document.getElementById('fbc').value=result.getText();closeFormScan();showT('✅ Scan: '+result.getText(),'ok');}});}
-  catch{showT('Camera denied','err');}
-}
-function closeFormScan(){document.getElementById('fscan-mod').classList.remove('active');if(zxFR2){try{zxFR2.reset();}catch{}}}
+
+function stopScan(){ scanOn=false; if(zxR2){try{zxR2.reset();}catch{}} }
 
 function onScan(code){
-  stopScan();
-  document.getElementById('scan-code').textContent=code;
-  document.getElementById('scan-res').style.display='block';
-  const match=P.find(p=>p.barcode===code);
+  // Camera BAND NAHI HOGA — sirf result dikhega!
+  const match = P.find(p=>p.barcode===code);
+  window._lc = code;
+
   if(match){
-    // ✅ AUTOMATICALLY aaj ke route mein add karo!
-    todayIds.add(match.id);
-    save();
-    // Today bar update karo
+    lastScannedId = match.id;
+    scanCount++;
+
+    // Auto aaj ke route mein add
+    todayIds.add(match.id); save();
     document.getElementById('today-bar').style.display='block';
     document.getElementById('today-title').textContent=todayIds.size+' parcels aaj ke liye';
     document.getElementById('s3').textContent=[...todayIds].filter(id=>!P.find(p=>p.id===id)?.delivered).length;
 
-    document.getElementById('scan-match').innerHTML=`<div style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:11px;padding:12px">
-      <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;background:linear-gradient(135deg,#34D399,#60A5FA);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:4px">✅ ${match.name}</div>
-      <div style="font-size:12px;color:var(--tx2);margin-bottom:6px">${match.phone||''} ${match.address?'• '+match.address:''}</div>
-      ${match.timeNote?`<div style="font-size:12px;color:var(--yellow);margin-bottom:8px">⏰ ${match.timeNote}</div>`:''}
-      <div style="background:rgba(16,185,129,0.15);border-radius:8px;padding:8px 10px;font-size:13px;font-weight:600;color:#34D399">✅ Aaj ke route mein add ho gaya! (${todayIds.size} total)</div>
-      <div style="display:flex;gap:7px;margin-top:10px">
-        ${match.lat?`<button class="chip c-nav" onclick="doNav(P.find(x=>x.id==='${match.id}'))">🗺️ Navigate</button>`:''}
-        ${match.phone?`<button class="chip c-call" onclick="window.open('tel:${match.phone}')">📞 Call</button>`:''}
-        <button class="chip c-edit" onclick="openEdit('${match.id}')">✏ Edit</button>
-      </div>
-    </div>`;
+    // Scanned card dikhao
+    showScanCard(match);
     showT(`✅ ${match.name} — Aaj ke route mein!`,'ok');
-    setFP(match.id);
+    if(navigator.vibrate) navigator.vibrate([100,50,100]);
+
+    // 3 sec baad cooldown hatao — camera phir ready!
+    setTimeout(()=>{
+      scanCooldown=false;
+      const sm=document.getElementById('scan-msg');
+      if(sm) sm.textContent='📷 Camera ready — Agla barcode dikhao!';
+    }, 3000);
+
   } else {
-    document.getElementById('scan-match').innerHTML=`<div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:11px;padding:12px">
-      <div style="font-size:14px;font-weight:600;color:var(--orange);margin-bottom:6px">⚠️ Koi parcel nahi mila</div>
-      <div style="font-size:13px;color:var(--tx2)">Naya parcel add karo is barcode ke saath!</div>
-    </div>`;
-    showT('Barcode match nahi mila — Add karo!','err');
+    // Nahi mila — naya add karo ya skip
+    showScanNotFound(code);
+    setTimeout(()=>{ scanCooldown=false; }, 3000);
   }
-  window._lc=code;
 }
+
+function showScanCard(p){
+  const el=document.getElementById('scan-res');
+  const hasPh=p.photos&&p.photos.length>0;
+  el.style.display='block';
+  el.innerHTML=`
+    <div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.3);border-radius:13px;padding:13px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <div style="width:46px;height:46px;border-radius:10px;overflow:hidden;background:var(--s2);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:22px;border:1px solid var(--br)">
+          ${hasPh?`<img src="${p.photos[0].data}" style="width:100%;height:100%;object-fit:cover">`:'📦'}
+        </div>
+        <div style="flex:1;min-width:0">
+          <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;background:linear-gradient(135deg,#34D399,#60A5FA);-webkit-background-clip:text;-webkit-text-fill-color:transparent">${p.name}</div>
+          <div style="font-size:12px;color:var(--tx2)">${p.phone||''}</div>
+          <div style="font-size:11px;color:var(--tx3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.address||''}</div>
+        </div>
+        <div style="background:rgba(16,185,129,0.2);border-radius:8px;padding:5px 9px;font-size:11px;font-weight:700;color:var(--green);white-space:nowrap">✅ Aaj #${scanCount}</div>
+      </div>
+      ${p.timeNote?`<div style="background:rgba(251,191,36,0.1);border:1px solid rgba(251,191,36,0.25);border-radius:8px;padding:7px 10px;margin-bottom:10px;font-size:12px;color:var(--yellow)">⏰ ${p.timeNote}</div>`:''}
+
+      <!-- 📍 LOCATION LOCK BUTTON -->
+      <button onclick="lockGPS('${p.id}',this)" style="width:100%;padding:11px;border-radius:10px;border:1px solid rgba(139,92,246,0.4);background:rgba(139,92,246,0.1);color:#A78BFA;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px;display:flex;align-items:center;justify-content:center;gap:7px">
+        ${p.lat?'🔒 Location Update Karo (pehle se set hai)':'📡 GPS se Location Lock Karo'}
+      </button>
+      <div id="gps-status-${p.id}" style="text-align:center;font-size:12px;color:var(--tx2);margin-bottom:10px">${p.lat?`📍 ${p.lat.toFixed(5)},${p.lng.toFixed(5)}`:'Ghar ke darwaze ke paas jaake lock karo!'}</div>
+
+      <div style="display:flex;gap:7px">
+        ${p.lat?`<button class="chip c-nav" style="flex:1;justify-content:center" onclick="doNav(P.find(x=>x.id==='${p.id}'))">🗺️ Go</button>`:''}
+        ${p.phone?`<button class="chip c-call" style="flex:1;justify-content:center" onclick="window.open('tel:${p.phone}')">📞 Call</button>`:''}
+        <button class="chip c-photo" style="flex:1;justify-content:center" onclick="addPhotoToP('${p.id}')">📸 Photo</button>
+        <button class="chip c-edit" style="flex:1;justify-content:center" onclick="openEdit('${p.id}')">✏</button>
+      </div>
+    </div>
+    <p style="text-align:center;color:var(--tx2);font-size:12px;margin-top:8px">📷 Camera ON hai — Agla barcode dikhao!</p>`;
+}
+
+function showScanNotFound(code){
+  const el=document.getElementById('scan-res');
+  el.style.display='block';
+  el.innerHTML=`
+    <div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);border-radius:13px;padding:13px">
+      <div style="font-size:14px;font-weight:700;color:var(--orange);margin-bottom:6px">⚠️ Parcel nahi mila!</div>
+      <div style="font-size:12px;color:var(--tx2);margin-bottom:10px;font-family:monospace;background:var(--s2);padding:6px 10px;border-radius:7px">${code}</div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-p" onclick="addFromScan()" style="flex:2;padding:10px">+ Naya Add Karo</button>
+        <button class="btn btn-gh btn-sm" style="flex:1" onclick="document.getElementById('scan-res').style.display='none';scanCooldown=false">Skip</button>
+      </div>
+    </div>
+    <p style="text-align:center;color:var(--tx2);font-size:12px;margin-top:8px">📷 Camera ON — 3 sec mein auto resume...</p>`;
+}
+
+// GPS Location Lock — scan screen se seedha!
+function lockGPS(pid, btn){
+  btn.textContent='📡 GPS dhundh raha hai...';
+  btn.disabled=true;
+  navigator.geolocation.getCurrentPosition(pos=>{
+    const lat=pos.coords.latitude, lng=pos.coords.longitude, acc=Math.round(pos.coords.accuracy);
+    const idx=P.findIndex(p=>p.id===pid);
+    if(idx!==-1){ P[idx].lat=lat; P[idx].lng=lng; P[idx].locationLocked=true; save(); }
+    const st=document.getElementById('gps-status-'+pid);
+    if(acc<=25){
+      btn.innerHTML='✅ Locked! (±'+acc+'m)';
+      btn.style.background='rgba(16,185,129,0.15)'; btn.style.borderColor='rgba(16,185,129,0.5)'; btn.style.color='var(--green)';
+    } else if(acc<=70){
+      btn.innerHTML='⚠️ ±'+acc+'m — Thoda aur khule mein jao';
+      btn.style.color='var(--orange)';
+    } else {
+      btn.innerHTML='❌ GPS weak ±'+acc+'m — Bahar jao!';
+      btn.style.color='var(--red)';
+    }
+    btn.disabled=false;
+    if(st) st.textContent=`📍 ${lat.toFixed(6)}, ${lng.toFixed(6)} (±${acc}m)`;
+    showT(`📍 Location locked! ±${acc}m`,'ok');
+    if(gTok) setTimeout(syncDrive,3000);
+  }, ()=>{
+    btn.textContent='📡 GPS se Location Lock Karo';
+    btn.disabled=false;
+    showT('GPS nahi mila — Location ON karo','err');
+  },{enableHighAccuracy:true,timeout:15000,maximumAge:0});
+}
+
+async function scanForm(){
+  document.getElementById('fscan-mod').classList.add('active');
+  try{
+    if(!zxFR2) zxFR2=new ZXing.BrowserMultiFormatReader();
+    await zxFR2.decodeFromConstraints({video:{facingMode:{ideal:'environment'}}},document.getElementById('fscan-vid'),(result,err)=>{if(result){document.getElementById('fbc').value=result.getText();closeFormScan();showT('✅ Scan: '+result.getText(),'ok');}});
+  }catch{showT('Camera denied','err');}
+}
+function closeFormScan(){document.getElementById('fscan-mod').classList.remove('active');if(zxFR2){try{zxFR2.reset();}catch{}}}
 function addFromScan(){openAdd();document.getElementById('fbc').value=window._lc||'';}
 function manSearch(){const c=document.getElementById('man-bc').value.trim();if(c)onScan(c);}
 
@@ -1440,24 +1627,25 @@ function showOCRRes(results){
 }
 
 // ════════════════════════════════════════════
-// EXPORT / IMPORT
+// EXPORT / IMPORT — Photos ke saath guaranteed backup
 // ════════════════════════════════════════════
-function exportJSON(){
-  try {
-    const json = JSON.stringify({version:8,exportedAt:new Date().toISOString(),parcels:P}, null, 2);
-    const blob = new Blob([json], {type:'application/json'});
-    const nm = `dp_backup_${ds()}.json`;
-    // Mobile friendly download
-    if(navigator.share && navigator.canShare) {
-      const file = new File([blob], nm, {type:'application/json'});
-      if(navigator.canShare({files:[file]})) {
-        navigator.share({files:[file], title:'DeliverPro Backup'});
-        showT('📤 Share karo backup file!','ok'); return;
+async function exportJSON(){
+  try{
+    showT('📦 Backup bana raha hai...','');
+    const json=JSON.stringify({version:8,exportedAt:new Date().toISOString(),parcels:P},null,2);
+    const blob=new Blob([json],{type:'application/json'});
+    const nm=`dp_backup_${ds()}.json`;
+    // Mobile — Share Sheet se (WhatsApp, Drive, Files sab mein bhej sako!)
+    if(navigator.share&&navigator.canShare){
+      const file=new File([blob],nm,{type:'application/json'});
+      if(navigator.canShare({files:[file]})){
+        await navigator.share({files:[file],title:'DeliverPro Backup — '+P.length+' parcels'});
+        showT('📤 Backup share ho gaya!','ok'); return;
       }
     }
-    dl(blob, nm);
-    showT('💾 Backup download ho raha hai!','ok');
-  } catch(e){ showT('❌ Error: '+e.message,'err'); }
+    dl(blob,nm);
+    showT('💾 Backup download hua — '+P.length+' parcels','ok');
+  }catch(e){ if(e.name!=='AbortError') showT('❌ '+e.message,'err'); }
 }
 
 function exportCSV(){
